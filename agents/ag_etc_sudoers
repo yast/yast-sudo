@@ -1,0 +1,176 @@
+#!/usr/bin/perl -w
+
+# Author: Bubli <kmachalkova@suse.cz>
+#
+# An agent for parsing /etc/sudoers file
+
+use ycp;
+use strict;
+use Errno qw(ENOENT);
+
+my $filename = "/etc/sudoers.test";
+
+my %data; #= (
+#		"Host_Alias" => [ ["# Host Alias Specification","SERVERS", "ns, www, mail"],["","FOO", "www.foo.org"] ],
+#		"User_Alias" => [ ["# User Alias Specification", "BAT","foobar"], ["","WWW", "wwwrun"] ],
+#		"Cmnd_Alias" => [ ["# Command Alias Specification", "HALT", "/usr/sbin/halt, /usr/sbin/shutdown -h now,"], ["","REBOOT", "/sbin/reboot"] ],
+#		"Runas_Alias" => [ ],
+#		"Defaults" => [["#Defaults specification","env_reset",""],["","always_set_home",""] ],	
+#		'root' => [ ["# User privilege specification", "ALL", "(ALL) ALL"] ],	
+#		'_wheel' => [ ["# Same thing without password", "ALL",  "(ALL) NOPASSWD: HALT,REBOOT"] ],	
+#	);
+
+sub parse_file {
+
+	if (!open(INFILE, $filename)) {
+		return 1 if ($! == ENOENT); #File doesn't exist (yet)
+		y2error("Could not open file $filename for reading: %1", $!);
+		return 0;
+	}
+
+	my $comment = "";
+	while (<INFILE>) {
+		chomp;
+		if (/^\s*$/ || /^#/) {
+			$comment .= "$_\n";
+			next; 
+		}
+
+		my $alias	= "";	
+		my @entry = ();
+		if (/^(\w+)\s+(\w+)\s*=\s*([^#]*)/) {
+			$alias =$1;
+			push(@entry,$comment,$2,$3);
+		}	
+		elsif (/^(\w+)\s+(\w+)/) {
+			$alias =$1;
+			push(@entry,$comment,$2,"");
+		}
+	
+		push (@{$data{$alias}}, \@entry);
+
+		$comment = "";
+	}
+
+	close (INFILE);
+	return 1;
+}
+
+sub store_key {
+	my $key = $_[0];
+
+	if (exists ($data{$key})) {
+		my @key_data = @{$data{$key}};
+		foreach my $entry (@key_data) {
+			my ($comment, $name, $members) = @{$entry};
+	
+			if($comment){
+				print OUTFILE $comment;
+			}
+			if($name) {
+				if($members) {
+					print OUTFILE $key,"\t", $name, " = ", $members, "\n";
+				}
+				else {
+					print OUTFILE $key,"\t", $name,"\n";
+				}
+			}
+		}
+	}
+}
+
+sub store_file {
+
+	open(OUTFILE,">$filename") 
+		or return y2error("Could not open file $filename for writing: %1", $!), 0;
+	
+	#Store Host Aliases first and delete old stuff
+	store_key("Host_Alias");
+	delete($data{"Host_Alias"});
+	
+	#Store User Aliases next
+	store_key("User_Alias");
+	delete($data{"User_Alias"});
+
+	#Store Command Aliases next
+	store_key("Cmnd_Alias");
+	delete($data{"Cmnd_Alias"});
+
+	#Defaults next
+	store_key("Defaults");
+	delete($data{"Defaults"});
+
+	#Runas Aliases then
+	store_key("Runas_Alias");
+	delete($data{"Runas_Alias"});
+
+	#Dump the rest
+	foreach my $key (keys %data) {
+		store_key($key);
+		delete($data{$key});
+	}
+
+	close(OUTFILE);
+	return 1;
+} 
+
+#parse whole file at once, fill in %data structure
+parse_file();
+
+#main loop
+while ( <STDIN> ) {
+	my ($command, $path, $argument) = ycp::ParseCommand ($_);
+
+	if ($command eq "Dir") {
+		if ($path eq ".") {
+			my @keys = keys %data;
+			ycp::Return(\@keys);
+		}
+		else {
+			ycp::Return([]);
+		}
+	}
+
+	elsif($command eq "Read") {
+		#Remove leading '.'
+		$path =~ s/\.//; 
+
+		if (exists($data{$path})) {
+			ycp::Return(\@{$data{$path} });
+		}
+		else {
+			y2error("Unrecognized key '$path'");
+			ycp::Return(undef);
+		}
+	}
+
+	elsif($command eq "Write") {
+		my $result;
+		if ($path eq "." && ref($argument) eq "HASH") {
+			%data = %{$argument};
+		}
+		elsif ($path eq "." && !defined($argument)) {
+			store_file();
+			$result = store_file() ? "true" : "false";
+		}
+		else {
+			y2error("Invalid path $path, or argument:", ref($argument));
+			$result = "false";
+		}
+
+		ycp::Return($result);
+	}
+
+	else {
+		y2error("Unknown instruction $command, or argument:", ref ($argument));
+		ycp::Return("false");
+	}
+}
+
+#Debug only !
+#foreach my $key (keys %data) {
+#	print "$key: ";
+#	for my $a_ref ( @{$data{$key}} ) {
+#		print "\t [ @$a_ref ],\n";
+#	}
+#} 

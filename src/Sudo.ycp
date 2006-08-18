@@ -1,0 +1,531 @@
+/* ------------------------------------------------------------------------------
+ * Copyright (c) 2006 Novell, Inc. All Rights Reserved.
+ *
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of version 2 of the GNU General Public License as published by the
+ * Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, contact Novell, Inc.
+ *
+ * To contact Novell about this file by physical or electronic mail, you may find
+ * current contact information at www.novell.com.
+ * ------------------------------------------------------------------------------
+ */
+
+/**
+ * File:	modules/Sudo.ycp
+ * Package:	Configuration of sudo
+ * Summary:	Sudo settings, input and output functions
+ * Authors:	Bubli <kmachalkova@suse.cz>
+ *
+ * $Id: Sudo.ycp 27914 2006-02-13 14:32:08Z locilka $
+ *
+ * Representation of the configuration of sudo.
+ * Input and output routines.
+ */
+
+{
+
+module "Sudo";
+textdomain "sudo";
+
+import "Progress";
+import "Report";
+import "Summary";
+import "Message";
+import "Service";
+import "Popup";
+import "SCR";
+import "Users";
+import "UsersCache";
+
+/**
+ * Data was modified?
+ */
+boolean modified = false;
+
+integer sl = 500;
+/**
+ * Data was modified?
+ * @return true if modified
+ */
+global boolean GetModified() {
+    return modified;
+}
+
+global void SetModified() {
+    modified = true;
+}
+
+map <string, list < list <string> > > settings = $[];
+map <string, list<string> > host_aliases = $[];
+map <string, list<string> > user_aliases = $[];
+map <string, list<string> > cmnd_aliases = $[];
+map <string, list<string> > runas_aliases = $[];
+list <list <string> > defaults = [];
+list < map <string, any> > user_specs = [];
+global list <string> all_users = [];
+
+boolean ReadSudoSettings() {
+//	list <string> wrk = [];
+	list <string> keys = SCR::Dir(.sudo);
+
+	if (keys != [])
+		foreach (string key, keys, {
+		list < list <string> > val = (list < list <string> >) SCR::Read(add(.sudo, topath(key)));
+			if (val != nil) settings[key] = val;
+     });
+
+	foreach(string opt_key, list < list <string> > opt_val, settings, {
+		// #comment \n key value = porn.bat 
+		// is returned as key : [["#comment","value","porn.bat"]]
+		// wrk[0] -> comment, wrk[1] -> value, wrk[2] -> porn.bat
+		foreach(list <string> wrk, opt_val, {
+			switch (opt_key) {
+				case "Host_Alias": {
+					host_aliases[ wrk[1]:"" ] = splitstring(deletechars(wrk[2]:""," \t"), ",");
+					break;
+				}
+				case "User_Alias": {
+					user_aliases[ wrk[1]:"" ] = splitstring(deletechars(wrk[2]:""," \t"), ",");
+					break;
+				}
+				case "Cmnd_Alias": {
+					cmnd_aliases[ wrk[1]:""] = splitstring( wrk[2]:"", ",");
+					break;
+				}
+				case "Runas_Alias": {
+					runas_aliases[ wrk[1]:"" ] = splitstring(deletechars(wrk[2]:""," \t"), ",");
+					break;
+				}
+				case "Defaults": {
+					//do nothing, keep defaults untouched
+					defaults = add(defaults,wrk);
+					break;
+				}
+				//User specifications remained
+				default: {
+					map <string, any> m = $[];
+					list <string> cmd = [];
+					m["user"] = opt_key;
+					m["host"] = wrk[1]:"";
+
+					//match "(.*)"
+					if (regexpmatch(wrk[2]:"","\\(.*\\)")){
+					     m["run_as"] = regexpsub(wrk[2]:"","(\\(.*\\))", "\\1");
+					}
+
+					if(issubstring(wrk[2]:"","NOPASSWD:")) {
+						m["no_passwd"] = (boolean) true;
+					}
+					else {
+					     m["no_passwd"] = (boolean) false;
+					}
+
+					cmd = splitstring(wrk[2]:"","):");
+					m["commands"] = (list <string>) splitstring (cmd[ size(cmd) -1 ]:"",",");
+					m["comment"] = wrk[0]:"";
+
+					user_specs = add(user_specs,m);
+					break;
+				}
+			}
+		});
+	});
+
+	settings = filter(string k, list <list <string> > v, settings,{
+		return (regexpmatch(k,".*_Alias"));
+	});
+
+
+	y2milestone("settings %1", settings);
+	return true;
+}
+
+global boolean ReadLocalUsers() {
+	boolean current_progress = Progress::set(false);
+	boolean gui = Users::GetGUI ();
+	Users::SetGUI (false);
+	Users::Read ();
+
+	list <string> users = (list<string>) merge (
+        UsersCache::GetUsernames("local"),
+        UsersCache::GetUsernames("system")
+    );
+
+	list <string> available_groups = [];
+	map<string,map<string,integer> > all_groupnames = UsersCache::GetAllGroupnames ();
+
+    foreach (string grouptype, map<string,integer> groupmap, all_groupnames, {
+     // only local sets
+		if (!contains (["local", "system"], grouptype))
+			break;
+		foreach (string group, integer val, groupmap, {
+			available_groups = add (available_groups,"%" + group);
+		});
+	});
+
+	all_users = (list <string>) merge(users,available_groups);
+
+	Progress::set(current_progress);
+	if(all_users == []) {
+		return false;
+	}
+	else return true;
+}
+
+boolean WriteSudoSettings() {
+	if GetModified()
+	{
+	//Host aliases
+	 settings["Host_Alias"] = maplist (list <string> s, settings["Host_Alias"]:[],{
+		if (haskey(host_aliases,s[1]:"")) {
+			s[2] = mergestring(host_aliases[s[1]:""]:[],",");
+			host_aliases = remove(host_aliases,s[1]:"");
+		}
+		else {
+			s[1] = "";
+			s[2] = "";
+		}
+		return s;
+	});
+
+	foreach(string opt_key, list<string> opt_val, host_aliases, {
+		settings["Host_Alias"] = add(settings["Host_Alias"]:[], ["", opt_key, mergestring(opt_val,",")]);
+	});
+
+	//User aliases
+	settings["User_Alias"] = maplist (list <string> s, settings["User_Alias"]:[],{
+		if (haskey(user_aliases,s[1]:"")) {
+			s[2] = mergestring(user_aliases[s[1]:""]:[],",");
+			user_aliases = remove(user_aliases,s[1]:"");
+		}
+		else {
+			s[1] = "";
+			s[2] = "";
+		}
+		return s;
+	});
+
+	foreach(string opt_key, list<string> opt_val, user_aliases, {
+		settings["User_Alias"] = add(settings["User_Alias"]:[], ["", opt_key, mergestring(opt_val,",")]);
+	});
+
+	//Runas aliases
+	settings["Runas_Alias"] = maplist (list <string> s, settings["Runas_Alias"]:[],{
+		if (haskey(runas_aliases,s[1]:"")) {
+			s[2] = mergestring(runas_aliases[s[1]:""]:[],",");
+			runas_aliases = remove(runas_aliases,s[1]:"");
+		}
+		else {
+			s[1] = "";
+			s[2] = "";
+		}
+		return s;
+	});
+
+	foreach(string opt_key, list<string> opt_val, runas_aliases, {
+		settings["Runas_Alias"] = add(settings["Runas_Alias"]:[], ["", opt_key, mergestring(opt_val,",")]);
+	});
+
+	//Command Aliases
+	settings["Cmnd_Alias"] = maplist (list <string> s, settings["Cmnd_Alias"]:[],{
+		if (haskey(cmnd_aliases,s[1]:"")) {
+			s[2] = mergestring(cmnd_aliases[s[1]:""]:[],",");
+			cmnd_aliases = remove(cmnd_aliases,s[1]:"");
+		}
+		else {
+			s[1] = "";
+			s[2] = "";
+		}
+		return s;
+	});
+
+	foreach(string opt_key, list<string> opt_val, cmnd_aliases, {
+		settings["Cmnd_Alias"] = add(settings["Cmnd_Alias"]:[], ["", opt_key, mergestring(opt_val,",")]);
+	});
+
+	// Enable sudo by removing "Defaults targetpw"
+	defaults = filter(string s, settings["Defaults"]:[],``(s != "targetpw"));
+	//Restore defaults
+	settings["Defaults"] = defaults;
+
+	// Remove ALL ALL = (ALL) ALL clausule, to disable users running any commands
+	if (haskey(settings,"ALL")) {
+			settings["ALL"] = filter(string s, settings["ALL"]:[],``( !regexpmatch(s, "ALL[ \t]*=[ \t]*\\(ALL\\)[ \t]*ALL[ \t]*")));
+	}
+
+	//Rest
+	foreach (map <string, any> m, user_specs,{
+		string user = (string) m["user"]:"";
+		string host = (string) m["host"]:"";
+		string comment = (string) m["comment"]:"";
+		string rest = (string) m["run_as"]:"" + " " + (( (boolean) m["no_passwd"]:false) ? "NOPASSWD: " : "") + mergestring((list <string>)m["commands"]:[],",");
+
+		settings[user] = add(settings[user]:[],[comment, host, rest]);
+	});
+
+	y2milestone("Writing sudo settings %1", settings);
+
+	if (SCR::Write(.sudo, settings))
+		return (SCR::Write(.sudo, nil));
+	else return false;
+
+	}
+	return true;
+}
+
+global list <map <string, any> > GetUserSpecs(){
+	return user_specs;
+}
+
+global void RemoveUserSpec(integer i) {
+	user_specs = remove(user_specs,i);
+}
+
+global map <string, any> GetUserSpecMember(integer i) {
+	return user_specs[i]:$[];
+}
+
+global void SetUserSpecMember(integer i, map <string,any> spec) {
+	user_specs[i] = spec;
+}
+
+global integer GetUserSpecSize(){
+	return (size(user_specs));
+}
+
+global boolean SearchUserSpec(string what, string key) {
+	boolean found = false;
+
+	foreach (map <string, any> m, user_specs, {
+		if (haskey(m, what)) {
+			if (what == "commands") {
+				if (contains(m[what]:[], key)){
+					found = true;
+					break;
+				}
+			} else {
+				if (m[what]:"" == key) {
+					found = true;
+					break;
+				}
+			}
+		}
+	});
+
+	return found;
+}
+
+global list <string> GetAliasNames (string what) {
+	switch(what) {
+		case ("user"): return (maplist (string key, list <string> val, user_aliases,{ return key; }));
+		case ("run_as"): return (maplist (string key, list <string> val, runas_aliases,{ return key; }));
+		case ("host"): return (maplist (string key, list <string> val, host_aliases,{ return key; }));
+		default: return [];
+	}
+}
+
+/* Users */
+global map <string, list<string> > GetUserAliases() {
+	return user_aliases;
+}
+
+global void RemoveUserAlias(string name) {
+	user_aliases = filter(string k, list<string> val, user_aliases, ``(k != name ));
+}
+
+global list <string> GetUserAliasMembers(string name) {
+	return user_aliases[name]:[];
+}
+
+global boolean SearchUserAlias(string name) {
+	return( haskey(user_aliases,name));
+}
+/* end Users */
+
+/* Hosts */
+global void SetUserAliasMembers (string name, list <string> members) {
+	user_aliases[name] = members;
+}
+
+global map <string, list<string> > GetHostAliases() {
+	return host_aliases;
+}
+
+global void RemoveHostAlias(string name) {
+	host_aliases = filter(string k, list<string> val, host_aliases, ``(k != name ));
+}
+
+global list <string> GetHostAliasMembers(string name) {
+	return host_aliases[name]:[];
+}
+
+global void SetHostAliasMembers (string name, list <string> members) {
+	host_aliases[name] = members;
+}
+
+global boolean SearchHostAlias(string name) {
+	return( haskey(host_aliases,name));
+}
+/* end Hosts */
+
+/* RunAs */
+global map <string, list<string> > GetRunAsAliases() {
+	return runas_aliases;
+}
+
+global void RemoveRunAsAlias(string name) {
+	runas_aliases = filter(string k, list<string> val, runas_aliases, ``(k != name ));
+}
+
+global list <string> GetRunAsAliasMembers(string name) {
+	return runas_aliases[name]:[];
+}
+
+global void SetRunAsAliasMembers (string name, list <string> members) {
+	runas_aliases[name] = members;
+}
+
+global boolean SearchRunAsAlias(string name) {
+	return( haskey(runas_aliases,name));
+}
+/* end RunAs */
+/* Commands */
+global map <string, list<string> > GetCmndAliases() {
+	return cmnd_aliases;
+}
+
+global void RemoveCmndAlias(string name) {
+	cmnd_aliases = filter(string k, list<string> val, cmnd_aliases, ``(k != name ));
+}
+
+global list <string> GetCmndAliasMembers(string name) {
+	return cmnd_aliases[name]:[];
+}
+
+global void SetCmndAliasMembers(string name, list <string> members) {
+	cmnd_aliases[name] = members;
+}
+
+global boolean SearchCmndAlias(string name) {
+	return( haskey(cmnd_aliases,name));
+}
+/*end Commands */
+
+global boolean Abort() {
+	return Popup::YesNo( _("All changes will be lost. Really quit sudo configuration without saving ?"));
+}
+
+/**
+ * Checks whether an Abort button has been pressed.
+ * If so, calls function to confirm the abort call.
+ :*
+ * @return boolean true if abort confirmed
+ */
+global boolean PollAbort() {
+    if (UI::PollInput() == `abort)
+	return Abort();
+
+    return false;
+}
+
+/**
+ * Read all sudo settings
+ * @return true on success
+ */
+global boolean Read() {
+
+    /* Sudo read dialog caption */
+    string caption = _("Initializing sudo Configuration");
+
+    integer steps = 2;
+
+    Progress::New( caption, " ", steps, [
+	    /* Progress stage 1/2 */
+	    _("Read sudo settings"),
+	    /* Progress stage 2/2 */
+	    _("Read local users and groups")
+	], [
+	    /* Progress step 1/2 */
+	    _("Reading sudo settings..."),
+	    /* Progress step 2/2 */
+	    _("Reading local users and groups..."),
+	    /* Progress finished */
+	    Message::Finished()
+	],
+	""
+    );
+
+ 	sleep(sl);
+
+    if(PollAbort()) return false;
+    Progress::NextStage();
+    /* Error message */
+    if(!ReadSudoSettings()) Report::Error(Message::CannotReadCurrentSettings());
+    sleep(sl);
+
+    if(PollAbort()) return false;
+    Progress::NextStep();
+    /* Error message */
+    if(!ReadLocalUsers()) Report::Error(_("Cannot read /etc/passwd."));
+    sleep(sl);
+
+    if(PollAbort()) return false;
+    Progress::NextStage ();
+    sleep(sl);
+
+    modified = false;
+    return true;
+}
+
+/**
+ * Write all sudo settings
+ * @return true on success
+ */
+global boolean Write() {
+
+    /* Sudo read dialog caption */
+    string caption = _("Saving sudo Configuration");
+
+    integer steps = 1;
+
+    integer sl = 500;
+
+    // We do not set help text here, because it was set outside
+    Progress::New(caption, " ", steps, [
+	    /* Progress stage 1/1 */
+	    _("Write the settings"),
+	], [
+	    /* Progress step 1/1 */
+	    _("Writing the settings..."),
+	    /* Progress finished */
+	    Message::Finished()
+	],
+	""
+    );
+
+    sleep(sl);
+
+    // write settings
+    if(PollAbort()) return false;
+    Progress::NextStage();
+    /* Error message */
+    if(!WriteSudoSettings()) Report::Error (_("Cannot write settings."));
+    sleep(sl);
+
+    Progress::NextStage();
+    sleep(sl);
+
+    return true;
+}
+
+
+/* EOF */
+}

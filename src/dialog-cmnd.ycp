@@ -1,0 +1,123 @@
+{
+textdomain "sudo";
+
+import "Label";
+import "Wizard";
+import "Sudo";
+import "Report";
+
+include "sudo/complex.ycp";
+include "sudo/helps.ycp";
+
+any RedrawCmndAlias(string name, list <string> members) {
+	list <term> items = [];
+
+	if (name != "") {
+		UI::ChangeWidget(`id("cmnd_alias_name"), `Value, name);
+	}
+
+	foreach(string it, members, {
+		items = add(items, `item(`id(it),it));
+	});
+
+	UI::ChangeWidget(`id("cmnd_alias_members"),`Items, items);
+
+}
+
+any AddEditCmndAliasDialog (string what) {
+	string caption = "";
+	list <string> alias_members = [];
+	list <term> items = [];
+
+	if (what == "Add") {
+		caption = _("New Command Alias");
+	} else if (what == "Edit") {
+	alias_members = Sudo::GetCmndAliasMembers(current_alias_name);
+		caption = _("Existing Command Alias");
+	}
+
+	term contents = `VBox (
+		`TextEntry(`id("cmnd_alias_name"),_("Alias Name")),
+		`Left(`Label(_("Command Names or Directories in the Alias"))),
+		`Table(`id("cmnd_alias_members"),`header("Commands"),[]),
+		`HBox(
+			`PushButton ( `id ( "add_command" ),  " " + Label::AddButton() + " "),
+			`PushButton ( `id ( "remove_command" ),  " " + Label::RemoveButton() + " ")
+          )
+	);
+
+	Wizard::SetContentsButtons(caption, contents,HELPS["command_alias"]:"",Label::BackButton(), Label::OKButton());
+	UI::ChangeWidget (`id("cmnd_alias_name"), `ValidChars, "_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+	RedrawCmndAlias(current_alias_name, alias_members);
+
+	any ret = nil;
+	while(true) {
+
+	    ret  = UI::UserInput();
+	    /* abort? */
+	    if(ret == `abort) {
+	        if(Sudo::Abort()) break;
+	        else continue;
+	    /* next */
+	    } else if(ret == `next) {
+			string new_alias = toupper ((string) UI::QueryWidget(`id("cmnd_alias_name"),`Value));
+			if (new_alias == "") {
+				Popup::Error(_("Alias name must not be empty."));
+				UI::SetFocus(`id("cmnd_alias_name"));
+				continue;
+			}
+			if (current_alias_name != new_alias) {
+				if (Sudo::SearchCmndAlias(new_alias) ) {
+					Popup::Error(sformat(_("Alias with name %1 already exists"),new_alias));
+					UI::SetFocus(`id("cmnd_alias_name"));
+					continue;
+				}
+				Sudo::RemoveCmndAlias(current_alias_name);
+			}
+			if (alias_members == []) {
+				Popup::Error(_("Alias must have at least one member."));
+				UI::SetFocus(`id("cmnd_alias_members"));
+				continue;
+			}
+
+			Sudo::SetCmndAliasMembers(new_alias,alias_members);
+			Sudo::SetModified();
+			break;
+
+		/* back */
+	    }else if(ret == `back) {
+	        break;
+	    /* unknown */
+		}else if(ret == "add_command"){
+			string new_member = AddCommandDialog(); 
+
+			if(!contains(alias_members, new_member)) {
+				alias_members = add(alias_members, new_member);
+				RedrawCmndAlias("",alias_members);
+			}
+		/* delete hosts */
+		}else if (ret == "remove_command"){
+			string current_item = (string) UI::QueryWidget(`id("cmnd_alias_members"), `CurrentItem);
+
+			alias_members = filter(string s, alias_members, ``(s != current_item));
+			RedrawCmndAlias("",alias_members);
+	    /* unknown */
+	     }else {
+	        y2error("unexpected retcode: %1", ret);
+	        continue;
+	    }
+
+	}
+
+	initial_screen = "cmnd_aliases";
+	Wizard::RestoreNextButton();
+	return ret;
+}
+
+any SaveCommandAliases () {
+	return `next;
+}
+
+
+}

@@ -1,0 +1,140 @@
+{
+textdomain "sudo";
+
+import "Label";
+import "Wizard";
+import "Sudo";
+import "Report";
+
+include "sudo/complex.ycp";
+include "sudo/helps.ycp";
+
+any RedrawRunAsAlias(string name, list <string> members, list <string> users) {
+	list <term> items = [];
+
+	if (name != "") {
+		UI::ChangeWidget(`id("runas_alias_name"), `Value, name);
+	}
+
+	foreach(string it, members, {
+		items = add(items, `item(`id(it),it));
+	});
+	UI::ChangeWidget(`id("runas_alias_members"),`Items, items);
+
+	UI::ReplaceWidget(`id("all_run_as_replace"),
+		`ComboBox(`id("all_run_as"),_("Local and System Users"),sort(string s, string t, users, ``( s < t))));
+
+}
+
+any AddEditRunAsAliasDialog (string what) {
+	string caption = "";
+	list <string> alias_members = [];
+	list <term> items = [];
+	list <string> users = (list <string>) merge(Sudo::all_users,Sudo::GetAliasNames("run_as")) ;
+
+	if (what == "Add") {
+		caption = _("New RunAs Alias");
+	} else if (what == "Edit") {
+		alias_members = Sudo::GetRunAsAliasMembers(current_alias_name);
+		foreach(string member, alias_members, {
+			users = filter(string user, users, ``(user != member));
+		});
+		caption = _("Existing RunAs Alias");
+	}
+
+	term contents = `VBox (
+		`TextEntry(`id("runas_alias_name"),_("Alias Name")),
+		`VSpacing(1),
+		`HBox(
+			`VBox(
+				`opt(`hstretch),
+				`Left(`ReplacePoint(`id("all_run_as_replace"),
+					`ComboBox(`id("all_run_as"),_("Local and System Users"), [])
+				)),
+				`Table(`id("runas_alias_members"), `opt(`hstretch,`vstretch), `header("Alias Members"),[])
+			),
+			`HSquash(
+				`VBox (
+					`VSpacing(1.1),
+                        `PushButton ( `id ( "add_member" ), `opt ( `hstretch ), " " + Label::AddButton() + " "),
+                        `PushButton ( `id ( "remove_member" ), `opt ( `hstretch ), " " + Label::RemoveButton() + " "),
+                        `Empty(`opt(`vstretch))
+                    )
+               )
+
+		)
+	);
+
+	Wizard::SetContentsButtons(caption, contents,HELPS["runas_alias"]:"",Label::BackButton(), Label::OKButton());
+	UI::ChangeWidget (`id("runas_alias_name"), `ValidChars, "_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+	RedrawRunAsAlias(current_alias_name, alias_members,users);
+
+	any ret = nil;
+	while(true) {
+
+	    ret  = UI::UserInput();
+	    /* abort? */
+	    if(ret == `abort) {
+	        if(Sudo::Abort()) break;
+	        else continue;
+	    /* next */
+		}else if(ret == `next) {
+			string new_alias = toupper((string) UI::QueryWidget(`id("runas_alias_name"),`Value));
+			if (new_alias == "") {
+				Popup::Error(_("Alias name must not be empty."));
+				UI::SetFocus(`id("runas_alias_name"));
+				continue;
+			}
+			if (current_alias_name != new_alias) {
+				if(Sudo::SearchRunAsAlias(new_alias)) {
+					Popup::Error(sformat(_("Alias with name %1 already exists"),new_alias));
+					UI::SetFocus(`id("runas_alias_name"));
+					continue;
+				}
+				Sudo::RemoveRunAsAlias(current_alias_name);
+			}
+			if (alias_members == []) {
+				Popup::Error(_("Alias must have at least one member."));
+				UI::SetFocus(`id("runas_alias_members"));
+				continue;
+			}
+
+			Sudo::SetRunAsAliasMembers(new_alias,alias_members);
+			Sudo::SetModified();
+			break;
+		/* back */
+	     }else if(ret == `back) {
+	        break;
+		/* add users*/
+		}else if(ret == "add_member"){
+			string new_member = (string) UI::QueryWidget(`id("all_run_as"),`Value);
+
+			alias_members = add(alias_members, new_member);
+			users = filter(string s, users, ``(s != new_member));
+			RedrawRunAsAlias("",alias_members, users);
+		/* delete users */
+		}else if (ret == "remove_member"){
+			string current_item = (string) UI::QueryWidget(`id("runas_alias_members"), `CurrentItem);
+			alias_members = filter(string s, alias_members, ``(s != current_item));
+			users = add(users, current_item);
+			UI::ReplaceWidget(`id("all_run_as_replace"),
+				`ComboBox(`id("all_run_as"),_("Local and System Users"),users));
+			RedrawRunAsAlias("",alias_members, users);
+	    /* unknown */
+	    } else {
+	        y2error("unexpected retcode: %1", ret);
+	        continue;
+	    }
+	}
+
+	initial_screen = "runas_aliases";
+	Wizard::RestoreNextButton();
+	return ret;
+}
+
+any SaveRunAsAliases () {
+	return `next;
+}
+
+}

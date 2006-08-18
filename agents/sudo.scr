@@ -1,0 +1,28 @@
+/**
+ * File:
+ *   sudo.scr
+ * Summary:
+ *   SCR Agent for reading/writing /etc/sudoers
+ * Access:
+ *   read/write
+ * Authors:
+ *   Bubli <kmachalkova@suse.cz>
+ * Example:
+ *   Dir(.sudo)
+ *	(["User_Alias","Runas_Alias","Host_Alias","ALL", "%wheel"] )
+ *
+ *   Read(.sudo.User_Alias)
+ *   (["WEBMASTERS = will, wendy, wim"])
+ *
+ *   Write(.sudo.Host_Alias, "SERVERS = master, mail, www, ns")
+ *   (true)
+ *
+ * $Id: sudo.scr 11113 2005-10-20 14:15:16Z kmachalkova $
+ *
+ * Fore more information about possible keys and values
+ * consult with the sudoers man pages `man sudoers`.
+ */
+
+.sudo
+
+`ag_etc_sudoers ()

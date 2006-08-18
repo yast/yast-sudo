@@ -1,0 +1,152 @@
+{
+
+textdomain "sudo";
+
+import "Wizard";
+import "Sudo";
+import "Label";
+import "Popup";
+
+include "sudo/helps.ycp";
+include "sudo/complex.ycp";
+
+void RedrawUserSpec(string user, string host, string runas, boolean pwd, list <string> commands) {
+		list <term> items = [];
+
+		if (user != "")
+			UI::ChangeWidget(`id("user_name"),`Value, user);
+		if (host != "")
+			UI::ChangeWidget(`id("host_name"),`Value, host);
+
+		if (runas != "") {
+			UI::ChangeWidget(`id("run_as"),`Value, deletechars(runas,"()"));
+		} else
+			UI::ChangeWidget(`id("run_as"),`Value, "");
+
+		UI::ChangeWidget(`id("no_passwd"),`Value, pwd);
+		foreach(string cmd, commands, {
+			items = add(items,`item(`id(cmd),cmd));
+		});
+		UI::ChangeWidget(`id("commands"),`Items, items);
+}
+
+
+any AddEditUserSpecDialog(string what) {
+
+
+	string caption =  "";
+	map <string, any> spec = $[];
+	list <string> commands = [];
+	list <string> users = (list <string>) merge(Sudo::all_users, Sudo::GetAliasNames("user"));
+	list <string> hosts = Sudo::GetAliasNames("host");
+	list <string> run_as = (list <string>) merge(Sudo::all_users, Sudo::GetAliasNames("run_as"));
+
+	if (what == "Add") {
+		caption = _("New User Specification");
+		//Setting default values
+	} else if (what == "Edit") {
+		caption = _("Existing User Specification");
+		spec = Sudo::GetUserSpecMember(current_spec_idx);
+		commands = spec["commands"]:[];
+	}
+
+	term contents = `VBox (
+		`Left(
+			`ComboBox(`id("user_name"), `opt(`editable), _("User, Group or User Alias"),sort(string s, string t,users,``(s < t)))
+		),
+		`Left(
+			`ComboBox(`id("host_name"), `opt(`editable), _("Host or Host Alias"),sort(string s, string t,hosts,``(s < t)))
+		),
+		`Left(
+			`ComboBox(`id("run_as"), `opt(`editable), _("RunAs or RunAs Alias"),sort(string s, string t, run_as,``(s < t)))
+		),
+		`Left(
+			`CheckBox(`id("no_passwd"),_("No Password"))
+		),
+		`Left (
+			`Label(_("Commands to Run"))
+		),
+		`Table(`id("commands"),`header(_("Command")),[]),
+		`HBox(
+			`PushButton ( `id ( "command_add" ),  " " + Label::AddButton() + " "),
+			`PushButton ( `id ( "command_remove" ),  " " + Label::RemoveButton() + " ")
+          )
+
+	);
+
+	Wizard::SetContentsButtons(caption, contents,HELPS["spec_single"]:"",Label::BackButton(), Label::OKButton());
+	UI::ChangeWidget(`id("user_name"),`ValidChars, "_%-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+	UI::ChangeWidget(`id("run_as"),`ValidChars, "_%-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+	RedrawUserSpec(spec["user"]:"", spec["host"]:"", spec["run_as"]:"", spec["no_passwd"]:true, spec["commands"]:[]);
+
+	any ret = nil;
+	while(true) {
+
+	    ret  = UI::UserInput();
+	    /* abort? */
+	    if(ret == `abort) {
+	        if(Sudo::Abort()) break;
+	        else continue;
+	    /* next */
+	    } else if(ret == `next) {
+			spec["user"] = UI::QueryWidget(`id("user_name"),`Value);
+			spec["host"] = UI::QueryWidget(`id("host_name"),`Value);
+			spec["run_as"] = (string)UI::QueryWidget(`id("run_as"),`Value);
+			spec["no_passwd"] = UI::QueryWidget(`id("no_passwd"),`Value); 
+			spec["commands"] = commands;
+
+			if (spec["user"]:"" == "") {
+				Popup::Error(_("User name must not be empty."));
+				UI::SetFocus(`id("user_name"));
+				continue;
+			}
+			if (spec["host"]:"" == "") {
+				Popup::Error(_("Host name must not be empty."));
+				UI::SetFocus(`id("host_name"));
+				continue;
+			}
+			if (spec["commands"]:[] == [] ) {
+				Popup::Error(_("Command list must have at least one entry"));
+				UI::SetFocus(`id("commands"));
+				continue;
+			}
+			if (spec["run_as"]:"" != "") {
+				spec["run_as"] = "(" + spec["run_as"]:"" + ")";
+			}
+			Sudo::SetUserSpecMember(current_spec_idx,spec);
+			Sudo::SetModified();
+	          break;
+		/* back */
+		} else if(ret == `back) {
+	        break;
+	    /* unknown */
+		} else if (ret == "command_add") {
+			string new_command = AddCommandDialog(); 
+
+			if(!contains(commands, new_command)) {
+				commands = add(commands, new_command);
+				RedrawUserSpec(spec["user"]:"", spec["host"]:"", spec["run_as"]:"", spec["no_passwd"]:false, commands);
+			}
+		} else if (ret == "command_remove") {
+			string current_item = (string) UI::QueryWidget(`id("commands"), `CurrentItem);
+
+			commands = filter(string s, commands, ``(s != current_item));
+			RedrawUserSpec(spec["user"]:"", spec["host"]:"", spec["run_as"]:"", spec["no_passwd"]:false, commands);
+	    } else {
+	        y2error("unexpected retcode: %1", ret);
+	        continue;
+	    }
+	}
+
+	initial_screen = "user_specs";
+	Wizard::RestoreNextButton();
+	return ret;
+
+}
+
+any SaveUserSpec() {
+	return `next;
+}
+
+}

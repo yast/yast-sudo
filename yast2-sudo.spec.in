@@ -1,0 +1,29 @@
+@HEADER-COMMENT@
+
+@HEADER@
+Requires:	yast2
+BuildRequires:	perl-XML-Writer update-desktop-files yast2 yast2-devtools yast2-testsuite
+
+BuildArchitectures:	noarch
+
+Summary:	Configuration of sudo
+
+%description
+-
+
+@PREP@
+
+@BUILD@
+
+@INSTALL@
+
+@CLEAN@
+
+%files
+%defattr(-,root,root)
+%dir @yncludedir@/sudo
+@yncludedir@/sudo/*
+@clientdir@/sudo.ycp
+@moduledir@/Sudo.*
+@desktopdir@/sudo.desktop
+%doc @docdir@
