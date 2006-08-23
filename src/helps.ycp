@@ -97,8 +97,8 @@ An additional dialog informs whether it is safe to do so.
 	/* Single User Specification help 1/4 */
 	"spec_single" : _("<p><b>User Name or Alias</b> may be specified by single username (e.g.foo), group name prefixed
 	with '%' (e.g. %bar), or user alias name. If 
-	keyword 'ALL' is used, it stands for any user. To select from existing users, groups and aliases,
-	click on <b>Browse</b> button.
+	keyword 'ALL' is used, it stands for any user. Select from existing users, groups and aliases 
+	in drop-down menu, or enter your own value. 
 	</p>
 	") + 
 	_("<p><b>Hostname or Alias</b> entry consists of either hostname(e.g. www.example.com), single IP 
@@ -113,7 +113,7 @@ An additional dialog informs whether it is safe to do so.
 	whose access privileges 
 	will be used to execute particular command. If empty, user <b>root</b> is the default
 	one. It can be again single username, groupname prefixed with '%' or run_as alias name
-	To select from existing users, groups and aliases, click on <b>Browse</b> button.
+	Select from existing users, groups and aliases in drop-down menu, or enter your own value.
 	</p>
 	") +
 	/* Single User Specification help 3/4*/

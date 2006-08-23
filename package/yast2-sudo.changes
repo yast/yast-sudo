@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Wed Aug 23 15:59:30 CEST 2006 - kmachalkova@suse.cz
+
+- added error condition handling to agent
+- added validation of host/netmask
+- extended command table to contain command parameters
+- enabled sudo by modifying default config on first write 
+- 2.14.1
+
+-------------------------------------------------------------------
 Thu Jul 13 09:40:10 2006 - kmachalkova@suse.cz
 
 - initial version
+- 2.14.0

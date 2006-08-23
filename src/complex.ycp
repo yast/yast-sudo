@@ -48,14 +48,36 @@ global string current_alias_name = "";
 global integer current_spec_idx = -1;
 global string initial_screen = "user_specs";
 
-string AddHostDialog()  {
-	string new_host = "";
+boolean ValidateHost(string hostname) {
 	string netmask = "";
+
+	if ( find(hostname,"/") != -1 ) {
+		list <string> tmp = splitstring(hostname,"/");
+		hostname = tmp[0]:"";
+		netmask = tmp[1]:"";
+
+		if( !Netmask::Check(netmask)){
+			netmask = "";
+			Popup::Error( _("A valid netmask is either in dotted quad notation 
+(4 integers in the range 128 - 255 separated by dots) 
+or single integer in the range 0 - 32" ) );
+		return false;
+		}
+	}
+	if ( !Address::Check(hostname)) {
+		Popup::Error( Address::Valid4() );
+		return false;
+	}
+	return true;
+}
+
+string AddHostDialog(string host)  {
+	string new_host = host;
 
 	UI::OpenDialog(`opt(`decorated), `VBox(
 	`Frame(
 		_("Add New Host to the Alias"),
-		`TextEntry(`id("hostname"),_("Hostname or Network"),"")
+		`TextEntry(`id("host_name"),_("Hostname or Network"), new_host)
 	),
 	`HBox(
 	    `PushButton(`id(`ok), Label::OKButton()),
@@ -68,53 +90,37 @@ string AddHostDialog()  {
 	while (true) {
         ret = UI::UserInput();
 		if (ret == `ok) {
-			new_host = (string) UI::QueryWidget(`id("hostname"), `Value);
+			new_host = (string) UI::QueryWidget(`id("host_name"), `Value);
 
-			if ( find(new_host,"/") != -1 ) {
-				list <string> tmp = splitstring(new_host,"/");
-				new_host = tmp[0]:"";
-				netmask = tmp[1]:"";
-
-				if( !Netmask::Check(netmask)){
-					netmask = "";
-					Popup::Error( _("A valid netmask is either in dotted quad notation 
-							(4 integers in the range 128 - 255 separated by dots) 
-							or single integer in the range 0 - 32" ) );
-					UI::SetFocus(`id("hostname"));
-					continue;
-				}
-				netmask = "/" + netmask;
-			}
-			if ( !Address::Check(new_host)) {
-				Popup::Error( Address::Valid4() );
-				UI::SetFocus(`id("hostname"));
+			if( !ValidateHost(new_host)) {
+				UI::SetFocus(`id("host_name"));
 				continue;
 			}
 			break;
 	     } else if (ret == `cancel) {
-			new_host = ("");
+//			new_host = ("");
 			break;
 		}
     }
 	UI::CloseDialog();
-	return (new_host + netmask);
+	return (new_host) ;
 }
 
-string AddCommandDialog() {
-	string new_command = "";
+string AddCommandDialog(string c, string p) {
+	string new_command = c + p;
 
 	UI::OpenDialog(`opt(`decorated), `VBox(
 		`Frame(
 			_("Add new command with optional parameters"),
 			`VBox(
 				`HBox(
-					`TextEntry(`id("cmd"),_("Command")),
+					`TextEntry(`id("cmd"),_("Command"),c),
 					`VBox (
 						`VSpacing(1.1),
 						`PushButton(`id("browse_c"),_("Browse"))
 					)
 				),
-				`TextEntry(`id("params"),_("Parameters (optional)"))
+				`TextEntry(`id("params"),_("Parameters (optional)"), p)
 			)
 		),
 		`HBox(
@@ -144,7 +150,31 @@ string AddCommandDialog() {
 	return new_command; 
 }
 
+list <term> UpdateCmdList (list <string> members) {
+	integer idx = 0;
+	list <term> items = [];
 
+	foreach(string it, members, {
+		integer pos = findfirstof(it," \t");
+		string cmd = "";
+		string param = "";
+
+		if(pos != nil) {
+			cmd = substring(it,0, pos);
+			param = substring(it,pos);
+		}
+		else {
+			cmd = it;
+			param = "";
+		}
+
+		items = add(items, `item(`id(idx),cmd,param));
+		idx = idx+1;
+	});
+
+	return items;
+
+}
 /* Read settings dialog
      * @return `abort if aborted and `next otherwise
      */
