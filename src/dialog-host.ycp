@@ -42,6 +42,7 @@ any AddEditHostAliasDialog (string what) {
 		`Table(`id("host_alias_members"),`header("Host Names/Networks"),[]),
 		`HBox(
 			`PushButton ( `id ( "add_host" ),  " " + Label::AddButton() + " "),
+			`PushButton ( `id ( "edit_host" ),  " " + Label::EditButton() + " "),
 			`PushButton ( `id ( "remove_host" ),  " " + Label::RemoveButton() + " ")
           )
 	);
@@ -90,18 +91,27 @@ any AddEditHostAliasDialog (string what) {
 	        break;
 	    /* unknown */
 		}else if(ret == "add_host"){
-			string new_member = AddHostDialog(); 
+			string new_member = AddHostDialog(""); 
 
 			if(new_member != "") {
 				alias_members = add(alias_members, new_member);
 				RedrawHostAlias("",alias_members);
+			}
+		/* edit hosts*/
+		} else if (ret == "edit_host") {
+			string current_item = (string) UI::QueryWidget(`id("host_alias_members"), `CurrentItem);
+			string new_member = AddHostDialog(current_item);
+
+			if (current_item != new_member) {
+				alias_members = filter (string s, alias_members, ``( s != current_item));
+				alias_members = add(alias_members, new_member);
+				RedrawHostAlias("", alias_members);
 			}
 		/* delete hosts */
 		}else if (ret == "remove_host"){
 			string current_item = (string) UI::QueryWidget(`id("host_alias_members"), `CurrentItem);
 
 			alias_members = filter(string s, alias_members, ``(s != current_item));
-			y2milestone("alias_members %1", alias_members);
 			RedrawHostAlias("",alias_members);
 	    /* unknown */
 	     }else {

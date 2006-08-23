@@ -7,6 +7,7 @@
 use ycp;
 use strict;
 use Errno qw(ENOENT);
+use Data::Dumper;
 
 my $filename = "/etc/sudoers.test";
 
@@ -17,7 +18,7 @@ my %data; #= (
 #		"Runas_Alias" => [ ],
 #		"Defaults" => [["#Defaults specification","env_reset",""],["","always_set_home",""] ],	
 #		'root' => [ ["# User privilege specification", "ALL", "(ALL) ALL"] ],	
-#		'_wheel' => [ ["# Same thing without password", "ALL",  "(ALL) NOPASSWD: HALT,REBOOT"] ],	
+#		'%wheel' => [ ["# Same thing without password", "ALL",  "(ALL) NOPASSWD: HALT,REBOOT"] ],	
 #	);
 
 sub parse_file {
@@ -38,11 +39,11 @@ sub parse_file {
 
 		my $alias	= "";	
 		my @entry = ();
-		if (/^(\w+)\s+(\w+)\s*=\s*([^#]*)/) {
+		if (/^(\S+)\s+(\S+)\s*=\s*([^#]*)/) {
 			$alias =$1;
 			push(@entry,$comment,$2,$3);
 		}	
-		elsif (/^(\w+)\s+(\w+)/) {
+		elsif (/^(\S+)\s+(\S+)/) {
 			$alias =$1;
 			push(@entry,$comment,$2,"");
 		}
@@ -81,8 +82,8 @@ sub store_key {
 
 sub store_file {
 
-	open(OUTFILE,">$filename") 
-		or return y2error("Could not open file $filename for writing: %1", $!), 0;
+	open(OUTFILE,">$filename.YaST2.new") 
+		or return y2error("Could not open file $filename.YaST2.new for writing: %1", $!), 0;
 	
 	#Store Host Aliases first and delete old stuff
 	store_key("Host_Alias");
@@ -111,6 +112,13 @@ sub store_file {
 	}
 
 	close(OUTFILE);
+
+	#system("visudo -c -f $filename.YaST2.new") or return y2error()
+
+	if (-f $filename) {
+		rename $filename, "$filename.YaST2.save" or return y2error("Error creating backup: $!"), 0;
+	}
+	rename "$filename.YaST2.new", $filename or return y2error("Error moving temp file: $!"), 0;
 	return 1;
 } 
 
@@ -133,24 +141,25 @@ while ( <STDIN> ) {
 
 	elsif($command eq "Read") {
 		#Remove leading '.'
-		$path =~ s/\.//; 
+		#$path =~ s/\.//; 
+		my @p = ycp::PathComponents(\$path);
 
-		if (exists($data{$path})) {
-			ycp::Return(\@{$data{$path} });
+		if (exists($data{$p[0]})) {
+			ycp::Return(\@{$data{$p[0]} });
 		}
 		else {
-			y2error("Unrecognized key '$path'");
+			y2error("Unrecognized key '$p[0]'");
 			ycp::Return(undef);
 		}
 	}
 
 	elsif($command eq "Write") {
-		my $result;
+		my $result = "true";
 		if ($path eq "." && ref($argument) eq "HASH") {
 			%data = %{$argument};
+			
 		}
 		elsif ($path eq "." && !defined($argument)) {
-			store_file();
 			$result = store_file() ? "true" : "false";
 		}
 		else {
@@ -161,6 +170,10 @@ while ( <STDIN> ) {
 		ycp::Return($result);
 	}
 
+	elsif ($command eq "result") {
+		exit;
+	}
+
 	else {
 		y2error("Unknown instruction $command, or argument:", ref ($argument));
 		ycp::Return("false");
@@ -168,9 +181,4 @@ while ( <STDIN> ) {
 }
 
 #Debug only !
-#foreach my $key (keys %data) {
-#	print "$key: ";
-#	for my $a_ref ( @{$data{$key}} ) {
-#		print "\t [ @$a_ref ],\n";
-#	}
-#} 
+#print STDERR Dumper(\%data);

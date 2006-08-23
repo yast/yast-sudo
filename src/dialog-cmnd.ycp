@@ -10,15 +10,11 @@ include "sudo/complex.ycp";
 include "sudo/helps.ycp";
 
 any RedrawCmndAlias(string name, list <string> members) {
-	list <term> items = [];
+	list <term> items = UpdateCmdList(members);
 
 	if (name != "") {
 		UI::ChangeWidget(`id("cmnd_alias_name"), `Value, name);
 	}
-
-	foreach(string it, members, {
-		items = add(items, `item(`id(it),it));
-	});
 
 	UI::ChangeWidget(`id("cmnd_alias_members"),`Items, items);
 
@@ -32,16 +28,21 @@ any AddEditCmndAliasDialog (string what) {
 	if (what == "Add") {
 		caption = _("New Command Alias");
 	} else if (what == "Edit") {
-	alias_members = Sudo::GetCmndAliasMembers(current_alias_name);
+		alias_members = Sudo::GetCmndAliasMembers(current_alias_name);
 		caption = _("Existing Command Alias");
 	}
 
 	term contents = `VBox (
 		`TextEntry(`id("cmnd_alias_name"),_("Alias Name")),
 		`Left(`Label(_("Command Names or Directories in the Alias"))),
-		`Table(`id("cmnd_alias_members"),`header("Commands"),[]),
+		`Table(`id("cmnd_alias_members"),`header(
+									_("Command"),
+									_("Parameters")
+			), []
+		),
 		`HBox(
 			`PushButton ( `id ( "add_command" ),  " " + Label::AddButton() + " "),
+			`PushButton ( `id ( "edit_command" ),  " " + Label::EditButton() + " "),
 			`PushButton ( `id ( "remove_command" ),  " " + Label::RemoveButton() + " ")
           )
 	);
@@ -90,17 +91,26 @@ any AddEditCmndAliasDialog (string what) {
 	        break;
 	    /* unknown */
 		}else if(ret == "add_command"){
-			string new_member = AddCommandDialog(); 
+			string new_member = AddCommandDialog("","");
 
 			if(!contains(alias_members, new_member)) {
 				alias_members = add(alias_members, new_member);
 				RedrawCmndAlias("",alias_members);
 			}
-		/* delete hosts */
-		}else if (ret == "remove_command"){
-			string current_item = (string) UI::QueryWidget(`id("cmnd_alias_members"), `CurrentItem);
+		/* edit command*/
+		}else if(ret == "edit_command"){
+			integer current_item = (integer) UI::QueryWidget(`id("cmnd_alias_members"), `CurrentItem);
+			term it = (term) UI::QueryWidget(`id("cmnd_alias_members"), `Item(current_item));
 
-			alias_members = filter(string s, alias_members, ``(s != current_item));
+			string new_member = AddCommandDialog(it[1]:"", it[2]:"");
+			alias_members[current_item] = new_member;
+			RedrawCmndAlias("", alias_members);
+
+		/* delete commands */
+		}else if (ret == "remove_command"){
+			 integer current_item = (integer) UI::QueryWidget(`id("cmnd_alias_members"), `CurrentItem);
+
+			alias_members = remove(alias_members, current_item);
 			RedrawCmndAlias("",alias_members);
 	    /* unknown */
 	     }else {

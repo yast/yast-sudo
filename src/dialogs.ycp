@@ -69,7 +69,11 @@ void InitUserSpecs (string key) {
 	integer idx = 0;
 
 	foreach(map <string, any> wrk, specs, {
-		string cmds = mergestring(wrk["commands"]:[],",");
+		string cmds = "";
+		if (size(wrk["commands"]:[]) > 1) {
+			 cmds = mergestring(wrk["commands"]:[],",");
+		} else
+			cmds = (wrk["commands"]:[])[0]:""; 
 		items = add(items, `item(`id(idx), (string) wrk["user"]:"", (string) wrk["host"]:"", (string) wrk["run_as"]:"",(wrk["no_passwd"]:false)? _("Yes") : _("No"), cmds));
 		idx = idx + 1;
 	});

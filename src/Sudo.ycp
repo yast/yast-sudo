@@ -78,9 +78,17 @@ boolean ReadSudoSettings() {
 
 	if (keys != [])
 		foreach (string key, keys, {
-		list < list <string> > val = (list < list <string> >) SCR::Read(add(.sudo, topath(key)));
+		list < list <string> > val = (list < list <string> >) SCR::Read(add(.sudo, key));
 			if (val != nil) settings[key] = val;
      });
+
+	y2milestone("settings %1", settings);
+	// Remove ALL ALL = (ALL) ALL clausule, to disable users running any commands
+
+	if (haskey(settings,"ALL")) {
+			settings["ALL"] = filter(list <string> lst, settings["ALL"]:[],``( lst[1]:"" != "ALL" && !regexpmatch(lst[2]:"", "\\(ALL\\)[ \t]*ALL[ \t]*")));
+	}
+	y2milestone("settings %1", settings);
 
 	foreach(string opt_key, list < list <string> > opt_val, settings, {
 		// #comment \n key value = porn.bat 
@@ -97,7 +105,9 @@ boolean ReadSudoSettings() {
 					break;
 				}
 				case "Cmnd_Alias": {
-					cmnd_aliases[ wrk[1]:""] = splitstring( wrk[2]:"", ",");
+					cmnd_aliases[ wrk[1]:""] = maplist(string s, splitstring( wrk[2]:"", ","), {
+						return (substring(s,findfirstnotof(s," \t")));
+					});
 					break;
 				}
 				case "Runas_Alias": {
@@ -130,6 +140,9 @@ boolean ReadSudoSettings() {
 
 					cmd = splitstring(wrk[2]:"","):");
 					m["commands"] = (list <string>) splitstring (cmd[ size(cmd) -1 ]:"",",");
+					m["commands"] = maplist(string s, m["commands"]:[],{
+						return (substring(s,findfirstnotof(s," \t")));
+					});
 					m["comment"] = wrk[0]:"";
 
 					user_specs = add(user_specs,m);
@@ -143,8 +156,6 @@ boolean ReadSudoSettings() {
 		return (regexpmatch(k,".*_Alias"));
 	});
 
-
-	y2milestone("settings %1", settings);
 	return true;
 }
 
@@ -181,7 +192,7 @@ global boolean ReadLocalUsers() {
 }
 
 boolean WriteSudoSettings() {
-	if GetModified()
+	if (GetModified())
 	{
 	//Host aliases
 	 settings["Host_Alias"] = maplist (list <string> s, settings["Host_Alias"]:[],{
@@ -252,16 +263,11 @@ boolean WriteSudoSettings() {
 	});
 
 	// Enable sudo by removing "Defaults targetpw"
-	defaults = filter(string s, settings["Defaults"]:[],``(s != "targetpw"));
+	defaults = filter(list <string> lst, defaults,``(!contains(lst, "targetpw")));
 	//Restore defaults
 	settings["Defaults"] = defaults;
 
-	// Remove ALL ALL = (ALL) ALL clausule, to disable users running any commands
-	if (haskey(settings,"ALL")) {
-			settings["ALL"] = filter(string s, settings["ALL"]:[],``( !regexpmatch(s, "ALL[ \t]*=[ \t]*\\(ALL\\)[ \t]*ALL[ \t]*")));
-	}
-
-	//Rest
+		//Rest
 	foreach (map <string, any> m, user_specs,{
 		string user = (string) m["user"]:"";
 		string host = (string) m["host"]:"";
@@ -276,7 +282,6 @@ boolean WriteSudoSettings() {
 	if (SCR::Write(.sudo, settings))
 		return (SCR::Write(.sudo, nil));
 	else return false;
-
 	}
 	return true;
 }

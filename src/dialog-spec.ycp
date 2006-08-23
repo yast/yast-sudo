@@ -11,7 +11,7 @@ include "sudo/helps.ycp";
 include "sudo/complex.ycp";
 
 void RedrawUserSpec(string user, string host, string runas, boolean pwd, list <string> commands) {
-		list <term> items = [];
+		list <term> items = UpdateCmdList(commands);
 
 		if (user != "")
 			UI::ChangeWidget(`id("user_name"),`Value, user);
@@ -24,9 +24,7 @@ void RedrawUserSpec(string user, string host, string runas, boolean pwd, list <s
 			UI::ChangeWidget(`id("run_as"),`Value, "");
 
 		UI::ChangeWidget(`id("no_passwd"),`Value, pwd);
-		foreach(string cmd, commands, {
-			items = add(items,`item(`id(cmd),cmd));
-		});
+
 		UI::ChangeWidget(`id("commands"),`Items, items);
 }
 
@@ -66,9 +64,10 @@ any AddEditUserSpecDialog(string what) {
 		`Left (
 			`Label(_("Commands to Run"))
 		),
-		`Table(`id("commands"),`header(_("Command")),[]),
+		`Table(`id("commands"),`header(_("Command"), _("Parameters")),[]),
 		`HBox(
 			`PushButton ( `id ( "command_add" ),  " " + Label::AddButton() + " "),
+			`PushButton ( `id ( "command_edit" ),  " " + Label::EditButton() + " "),
 			`PushButton ( `id ( "command_remove" ),  " " + Label::RemoveButton() + " ")
           )
 
@@ -106,6 +105,10 @@ any AddEditUserSpecDialog(string what) {
 				UI::SetFocus(`id("host_name"));
 				continue;
 			}
+			if (!ValidateHost(spec["host"]:"")) {
+				UI::SetFocus(`id("host_name"));
+				continue;
+			}
 			if (spec["commands"]:[] == [] ) {
 				Popup::Error(_("Command list must have at least one entry"));
 				UI::SetFocus(`id("commands"));
@@ -120,18 +123,28 @@ any AddEditUserSpecDialog(string what) {
 		/* back */
 		} else if(ret == `back) {
 	        break;
-	    /* unknown */
+	    /* add command  */
 		} else if (ret == "command_add") {
-			string new_command = AddCommandDialog(); 
+			string new_command = AddCommandDialog("","");
 
 			if(!contains(commands, new_command)) {
 				commands = add(commands, new_command);
 				RedrawUserSpec(spec["user"]:"", spec["host"]:"", spec["run_as"]:"", spec["no_passwd"]:false, commands);
 			}
-		} else if (ret == "command_remove") {
-			string current_item = (string) UI::QueryWidget(`id("commands"), `CurrentItem);
+		/* edit command*/
+		}else if(ret == "command_edit"){
+			integer current_item = (integer) UI::QueryWidget(`id("commands"), `CurrentItem);
+			term it = (term) UI::QueryWidget(`id("commands"), `Item(current_item));
 
-			commands = filter(string s, commands, ``(s != current_item));
+			string new_command = AddCommandDialog(it[1]:"", it[2]:"");
+			commands[current_item] = new_command; 
+			RedrawUserSpec(spec["user"]:"", spec["host"]:"", spec["run_as"]:"", spec["no_passwd"]:false, commands);
+
+		/* remove command */
+		} else if (ret == "command_remove") {
+			integer current_item = (integer) UI::QueryWidget(`id("commands"), `CurrentItem);
+
+			commands = remove(commands, current_item);
 			RedrawUserSpec(spec["user"]:"", spec["host"]:"", spec["run_as"]:"", spec["no_passwd"]:false, commands);
 	    } else {
 	        y2error("unexpected retcode: %1", ret);
