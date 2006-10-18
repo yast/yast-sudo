@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Oct 18 17:06:55 CEST 2006 - kmachalkova@suse.cz
+
+- Fixed command table redrawing in user specification dialog
+- Using real /etc/sudoers instead of testfile in agent (#209388) 
+- Fixed permissions (0640) when creating /etc/sudoers
+- 2.14.2
+
+-------------------------------------------------------------------
 Wed Aug 23 15:59:30 CEST 2006 - kmachalkova@suse.cz
 
 - added error condition handling to agent

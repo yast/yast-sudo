@@ -9,7 +9,7 @@ use strict;
 use Errno qw(ENOENT);
 use Data::Dumper;
 
-my $filename = "/etc/sudoers.test";
+my $filename = "/etc/sudoers";
 
 my %data; #= (
 #		"Host_Alias" => [ ["# Host Alias Specification","SERVERS", "ns, www, mail"],["","FOO", "www.foo.org"] ],
@@ -119,6 +119,7 @@ sub store_file {
 		rename $filename, "$filename.YaST2.save" or return y2error("Error creating backup: $!"), 0;
 	}
 	rename "$filename.YaST2.new", $filename or return y2error("Error moving temp file: $!"), 0;
+	chmod(0640,$filename);
 	return 1;
 } 
 

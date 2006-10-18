@@ -10,22 +10,12 @@ import "Popup";
 include "sudo/helps.ycp";
 include "sudo/complex.ycp";
 
-void RedrawUserSpec(string user, string host, string runas, boolean pwd, list <string> commands) {
-		list <term> items = UpdateCmdList(commands);
+void RedrawCmndTable (list <string> commands) {
+		if (commands != []) {
+			list <term> items = UpdateCmdList(commands);
 
-		if (user != "")
-			UI::ChangeWidget(`id("user_name"),`Value, user);
-		if (host != "")
-			UI::ChangeWidget(`id("host_name"),`Value, host);
-
-		if (runas != "") {
-			UI::ChangeWidget(`id("run_as"),`Value, deletechars(runas,"()"));
-		} else
-			UI::ChangeWidget(`id("run_as"),`Value, "");
-
-		UI::ChangeWidget(`id("no_passwd"),`Value, pwd);
-
-		UI::ChangeWidget(`id("commands"),`Items, items);
+			UI::ChangeWidget(`id("commands"),`Items, items);
+		}
 }
 
 
@@ -77,7 +67,13 @@ any AddEditUserSpecDialog(string what) {
 	UI::ChangeWidget(`id("user_name"),`ValidChars, "_%-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
 	UI::ChangeWidget(`id("run_as"),`ValidChars, "_%-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-	RedrawUserSpec(spec["user"]:"", spec["host"]:"", spec["run_as"]:"", spec["no_passwd"]:true, spec["commands"]:[]);
+	//initialize UI
+	UI::ChangeWidget(`id("user_name"),`Value, spec["user"]:"");
+	UI::ChangeWidget(`id("host_name"),`Value, spec["host"]:"");
+	UI::ChangeWidget(`id("run_as"),`Value, deletechars(spec["run_as"]:"","()"));
+	UI::ChangeWidget(`id("no_passwd"),`Value, spec["no_passwd"]:false);
+	RedrawCmndTable(commands);
+
 
 	any ret = nil;
 	while(true) {
@@ -129,7 +125,7 @@ any AddEditUserSpecDialog(string what) {
 
 			if(!contains(commands, new_command)) {
 				commands = add(commands, new_command);
-				RedrawUserSpec(spec["user"]:"", spec["host"]:"", spec["run_as"]:"", spec["no_passwd"]:false, commands);
+				RedrawCmndTable(commands);
 			}
 		/* edit command*/
 		}else if(ret == "command_edit"){
@@ -138,14 +134,14 @@ any AddEditUserSpecDialog(string what) {
 
 			string new_command = AddCommandDialog(it[1]:"", it[2]:"");
 			commands[current_item] = new_command; 
-			RedrawUserSpec(spec["user"]:"", spec["host"]:"", spec["run_as"]:"", spec["no_passwd"]:false, commands);
+			RedrawCmndTable(commands);
 
 		/* remove command */
 		} else if (ret == "command_remove") {
 			integer current_item = (integer) UI::QueryWidget(`id("commands"), `CurrentItem);
 
 			commands = remove(commands, current_item);
-			RedrawUserSpec(spec["user"]:"", spec["host"]:"", spec["run_as"]:"", spec["no_passwd"]:false, commands);
+			RedrawCmndTable(commands);
 	    } else {
 	        y2error("unexpected retcode: %1", ret);
 	        continue;
