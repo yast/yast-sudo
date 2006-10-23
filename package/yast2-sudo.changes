@@ -7,6 +7,11 @@ Wed Oct 18 17:06:55 CEST 2006 - kmachalkova@suse.cz
 - 2.14.2
 
 -------------------------------------------------------------------
+Thu Aug 24 23:52:06 CEST 2006 - ro@suse.de
+
+- fix requires yast2-theme -> yast2_theme
+
+-------------------------------------------------------------------
 Wed Aug 23 15:59:30 CEST 2006 - kmachalkova@suse.cz
 
 - added error condition handling to agent
