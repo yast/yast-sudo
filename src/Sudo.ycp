@@ -73,7 +73,6 @@ list < map <string, any> > user_specs = [];
 global list <string> all_users = [];
 
 boolean ReadSudoSettings() {
-//	list <string> wrk = [];
 	list <string> keys = SCR::Dir(.sudo);
 
 	if (keys != [])
@@ -82,12 +81,6 @@ boolean ReadSudoSettings() {
 			if (val != nil) settings[key] = val;
      });
 
-	y2milestone("settings %1", settings);
-	// Remove ALL ALL = (ALL) ALL clausule, to disable users running any commands
-
-	if (haskey(settings,"ALL")) {
-			settings["ALL"] = filter(list <string> lst, settings["ALL"]:[],``( lst[1]:"" != "ALL" && !regexpmatch(lst[2]:"", "\\(ALL\\)[ \t]*ALL[ \t]*")));
-	}
 	y2milestone("settings %1", settings);
 
 	foreach(string opt_key, list < list <string> > opt_val, settings, {
@@ -262,8 +255,6 @@ boolean WriteSudoSettings() {
 		settings["Cmnd_Alias"] = add(settings["Cmnd_Alias"]:[], ["", opt_key, mergestring(opt_val,",")]);
 	});
 
-	// Enable sudo by removing "Defaults targetpw"
-	defaults = filter(list <string> lst, defaults,``(!contains(lst, "targetpw")));
 	//Restore defaults
 	settings["Defaults"] = defaults;
 
@@ -327,6 +318,26 @@ global boolean SearchUserSpec(string what, string key) {
 
 	return found;
 }
+
+global boolean SystemRulePopup(map <string, any> m, boolean delete) {
+	if ( m["user"]:"" == "ALL" && 
+	     m["host"]:"" == "ALL" && 
+	     m["run_as"]:"" == "(ALL)") {
+
+		string text = _("This rule is a system rule necessary for correct functionality of sudo.\n");
+
+		if (delete) {
+			text = text + _("After deleting it, some applications may no longer work.\nReally delete?");
+		}
+		else {
+			text = text + _("If you change it, some applications may no longer work.\nReally edit? ");
+		}
+
+		return (Popup::YesNo(text));
+	}
+	else return true;
+}
+
 
 global list <string> GetAliasNames (string what) {
 	switch(what) {
