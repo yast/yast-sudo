@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Jan  5 13:00:57 CET 2007 - kmachalkova@suse.cz
+
+- Do not remove 'targetpw' and 'ALL ALL=ALL' rule from /etc/sudoers
+  since it makes kdesu defunct
+- Prompt for confirming delete/edit of 'ALL ALL=ALL' rule
+- 2.15.0 
+
+-------------------------------------------------------------------
 Wed Oct 18 17:06:55 CEST 2006 - kmachalkova@suse.cz
 
 - Fixed command table redrawing in user specification dialog
