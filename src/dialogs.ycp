@@ -50,16 +50,19 @@ symbol HandleUserSpecs(string key, map event) {
 		return `add_spec;
 	} else if (ret == "edit_spec") {
 		current_spec_idx = (integer) UI::QueryWidget(`id("table_user_spec"), `CurrentItem);
-		return `edit_spec;
+		if (Sudo::SystemRulePopup( Sudo::GetUserSpecMember(current_spec_idx), false)) 
+			return `edit_spec;
 	} else if (ret == "delete_spec") {
 		integer idx = (integer) UI::QueryWidget(`id("table_user_spec"), `CurrentItem);
 		list <term> items = (list <term>) UI::QueryWidget(`id("table_user_spec"), `Items);
 
-		Sudo::RemoveUserSpec(idx);
-		UI::ChangeWidget(`id("table_user_spec"), `Items, filter(term tmp, items,{
-			return tmp[0]:nil != `id(idx);
-		} ));
-		Sudo::SetModified();
+		if (Sudo::SystemRulePopup( Sudo::GetUserSpecMember(idx), true)) {
+			Sudo::RemoveUserSpec(idx);
+			UI::ChangeWidget(`id("table_user_spec"), `Items, filter(term tmp, items,{
+				return tmp[0]:nil != `id(idx);
+			} ));
+			Sudo::SetModified();
+		}
 	}
 }
 
