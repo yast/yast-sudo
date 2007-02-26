@@ -113,13 +113,19 @@ sub store_file {
 
 	close(OUTFILE);
 
-	#system("visudo -c -f $filename.YaST2.new") or return y2error()
+	#try syntax checking - non-zero return value of system() means failure
+	my $status = system ("visudo", "-c", "-q", "-f", "$filename.YaST2.new"); 
+	if ($status != 0){
+		return y2error("Syntax error in $filename.YaST2.new"), 0; 
+	}
 
 	if (-f $filename) {
 		rename $filename, "$filename.YaST2.save" or return y2error("Error creating backup: $!"), 0;
 	}
 	rename "$filename.YaST2.new", $filename or return y2error("Error moving temp file: $!"), 0;
-	chmod(0640,$filename);
+	
+	#Save /etc/sudoers with 0440 access rights - FaTE #300934
+	chmod(0440,$filename);
 	return 1;
 } 
 
