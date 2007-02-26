@@ -1,4 +1,18 @@
 -------------------------------------------------------------------
+Mon Feb 26 15:07:28 CET 2007 - kmachalkova@suse.cz
+
+- Added syntax checking of created file (#227397)
+- Save /etc/sudoers as 0440 (FaTE #300934) 
+- Check if entered command is a valid path or alias (#227397)
+- Enable going back to revisit the configuration if the file
+  cannot be saved (due to syntax errors)
+- Correct handling of deleting command aliases
+- Correct handling of Cancel button in command and host popup
+- Adjusted some dialog layouts (#245284)
+- Changed some strings
+- 2.15.1
+
+-------------------------------------------------------------------
 Fri Jan  5 13:00:57 CET 2007 - kmachalkova@suse.cz
 
 - Do not remove 'targetpw' and 'ALL ALL=ALL' rule from /etc/sudoers
