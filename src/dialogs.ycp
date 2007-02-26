@@ -40,7 +40,7 @@ include "sudo/helps.ycp";
 include "sudo/complex.ycp";
 
 
-string sudo_caption = _("Sudo Configuration ");
+string sudo_caption = _("Sudo Configuration");
 
 symbol HandleUserSpecs(string key, map event) {
 	any ret = event["ID"]:nil;
@@ -230,7 +230,7 @@ symbol HandleCmndAliases(string key, map event) {
 		}
 
 		if (confirm_delete) {
-			Sudo::RemoveUserAlias(current_alias_name);
+			Sudo::RemoveCmndAlias(current_alias_name);
 			UI::ChangeWidget(`id("table_command_aliases"), `Items, filter(term tmp, items, {
 				return tmp[0]:nil != `id(current_alias_name);
 			} ));
@@ -313,7 +313,7 @@ map <string, map <string,any> > tabs = $[
 							`PushButton(`id("delete_spec")," " + Label::DeleteButton() + " ")
 						)
 					),
-		"caption" : sudo_caption + ":" + _("User Specification"),
+		"caption" : sudo_caption + ": " + _("Rules for sudo"),
 		"tree_item_label" : _("User Specification"),
 		"widget_names" : ["UserSpecifications"],
 	],
@@ -333,7 +333,7 @@ map <string, map <string,any> > tabs = $[
 						)
 
 					),
-		"caption" : sudo_caption + ":" + _("User Aliases"),
+		"caption" : sudo_caption + ": " + _("User Aliases"),
 		"tree_item_label" : _("User Aliases"),
 		"widget_names" : ["UserAliases"],
 	 ] ,
@@ -353,7 +353,7 @@ map <string, map <string,any> > tabs = $[
 						)
 
 					),
-		"caption" : sudo_caption + ":" + _("RunAs Aliases"),
+		"caption" : sudo_caption + ": " + _("RunAs Aliases"),
 		"tree_item_label" : _("RunAs Aliases"),
 		"widget_names" : ["RunAsAliases"],
 	 ],
@@ -373,7 +373,7 @@ map <string, map <string,any> > tabs = $[
 						)
 
 					),
-		"caption" : sudo_caption + ":" + _("Host Aliases"),
+		"caption" : sudo_caption + ": " + _("Host Aliases"),
 		"tree_item_label" : _("Host Aliases"),
 		"widget_names" : ["HostAliases"],
 	 ],
@@ -393,7 +393,7 @@ map <string, map <string,any> > tabs = $[
 						)
 
 					),
-		"caption" : sudo_caption + ":" + _("Command Aliases"),
+		"caption" : sudo_caption + ": " + _("Command Aliases"),
 		"tree_item_label" : _("Command Aliases"),
 		"widget_names" : ["CommandAliases"],
 	 ],
