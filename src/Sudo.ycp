@@ -70,6 +70,7 @@ map <string, list<string> > cmnd_aliases = $[];
 map <string, list<string> > runas_aliases = $[];
 list <list <string> > defaults = [];
 list < map <string, any> > user_specs = [];
+list <string> deleted_specs = [];
 global list <string> all_users = [];
 
 boolean ReadSudoSettings() {
@@ -258,20 +259,27 @@ boolean WriteSudoSettings() {
 	//Restore defaults
 	settings["Defaults"] = defaults;
 
-		//Rest
-	foreach (map <string, any> m, user_specs,{
+	//Rest
+	foreach(map <string, any> m, user_specs,{
 		string user = (string) m["user"]:"";
 		string host = (string) m["host"]:"";
 		string comment = (string) m["comment"]:"";
 		string rest = (string) m["run_as"]:"" + " " + (( (boolean) m["no_passwd"]:false) ? "NOPASSWD: " : "") + mergestring((list <string>)m["commands"]:[],",");
 
-		settings[user] = add(settings[user]:[],[comment, host, rest]);
+		if( !contains(settings[user]:[], [comment, host, rest]) )
+			settings[user] = add(settings[user]:[],[comment, host, rest]);
+	});
+
+	foreach(string key, list <list <string> > value, settings, {
+		if ( deleted_specs != [] && contains(deleted_specs, key)){
+			settings = remove(settings, key);
+		}
 	});
 
 	y2milestone("Writing sudo settings %1", settings);
 
 	if (SCR::Write(.sudo, settings))
-		return (SCR::Write(.sudo, nil));
+		return SCR::Write(.sudo, nil);
 	else return false;
 	}
 	return true;
@@ -282,6 +290,11 @@ global list <map <string, any> > GetUserSpecs(){
 }
 
 global void RemoveUserSpec(integer i) {
+	map <string, any> m = user_specs[i]: $[];
+	string key = m["user"]:"";
+	y2milestone("Deleting %1 from user specifications", key);
+
+	deleted_specs = add(deleted_specs, key);
 	user_specs = remove(user_specs,i);
 }
 
@@ -514,6 +527,8 @@ global boolean Write() {
 
     integer sl = 500;
 
+    boolean ret = true;
+
     // We do not set help text here, because it was set outside
     Progress::New(caption, " ", steps, [
 	    /* Progress stage 1/1 */
@@ -533,13 +548,16 @@ global boolean Write() {
     if(PollAbort()) return false;
     Progress::NextStage();
     /* Error message */
-    if(!WriteSudoSettings()) Report::Error (_("Cannot write settings."));
+    if(!WriteSudoSettings()) {
+	Report::Error (_("Cannot write settings."));
+	ret = false;
+    }
     sleep(sl);
 
     Progress::NextStage();
     sleep(sl);
 
-    return true;
+    return ret;
 }
 
 

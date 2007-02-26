@@ -34,24 +34,24 @@ textdomain "sudo";
 import "Label";
 import "Popup";
 import "Wizard";
-import "Wizard_hw";
 import "Confirm";
 import "Sudo";
 import "Report";
 import "Address";
 import "Netmask";
+import "FileUtils";
 
 
 include "sudo/helps.ycp";
 
-global string current_alias_name = "";
-global integer current_spec_idx = -1;
-global string initial_screen = "user_specs";
+string current_alias_name = "";
+integer current_spec_idx = -1;
+string initial_screen = "user_specs";
 
 boolean ValidateHost(string hostname) {
 	string netmask = "";
 
-	if ( find(hostname,"/") != -1 ) {
+	if ( findfirstof(hostname,"/") != nil ) {
 		list <string> tmp = splitstring(hostname,"/");
 		hostname = tmp[0]:"";
 		netmask = tmp[1]:"";
@@ -77,7 +77,12 @@ string AddHostDialog(string host)  {
 	UI::OpenDialog(`opt(`decorated), `VBox(
 	`Frame(
 		_("Add New Host to the Alias"),
-		`TextEntry(`id("host_name"),_("Hostname or Network"), new_host)
+		`VBox(
+			`HSpacing(40),
+			`VSpacing(0.5),
+			`TextEntry(`id("host_name"),_("Hostname or Network"), new_host),
+			`VSpacing(0.5)
+		)
 	),
 	`HBox(
 	    `PushButton(`id(`ok), Label::OKButton()),
@@ -89,7 +94,7 @@ string AddHostDialog(string host)  {
 	any ret = nil;
 	while (true) {
         ret = UI::UserInput();
-		if (ret == `ok) {
+	     if (ret == `ok) {
 			new_host = (string) UI::QueryWidget(`id("host_name"), `Value);
 
 			if( !ValidateHost(new_host)) {
@@ -98,54 +103,77 @@ string AddHostDialog(string host)  {
 			}
 			break;
 	     } else if (ret == `cancel) {
-//			new_host = ("");
+			new_host="";
 			break;
-		}
-    }
+	     }
+	}
 	UI::CloseDialog();
 	return (new_host) ;
+}
+
+boolean ValidateCommand(string cmd){
+	if(FileUtils::Exists(cmd) || haskey(Sudo::GetCmndAliases(), cmd) )
+		return true;
+	else {
+	    Popup::Error(sformat(_("File, directory or command alias '%1' does not exist."), cmd));
+	    return false;
+	}
 }
 
 string AddCommandDialog(string c, string p) {
 	string new_command = c + p;
 
 	UI::OpenDialog(`opt(`decorated), `VBox(
-		`Frame(
-			_("Add new command with optional parameters"),
-			`VBox(
-				`HBox(
-					`TextEntry(`id("cmd"),_("Command"),c),
-					`VBox (
-						`VSpacing(1.1),
-						`PushButton(`id("browse_c"),_("Browse"))
-					)
-				),
-				`TextEntry(`id("params"),_("Parameters (optional)"), p)
+                `Frame(
+                        _("Add new command with optional parameters"),
+                        `VBox(
+				`VSpacing(0.5),
+				`VBox(
+					`HBox(
+						`MinWidth(40,`Left(`TextEntry(`id("cmd"), _("Command"), c))),
+	                                        `VBox(
+							`VSpacing(1.1),
+		                                        `PushButton(`id("browse_c"),_("Browse"))
+						)
+					),
+	                                `Left(`TextEntry(`id("params"),_("Parameters (optional)"), p))
+:				),
+				`VSpacing(0.5)
 			)
 		),
-		`HBox(
+		`VSpacing(0.5),
+                `HBox(
 			`PushButton(`id(`ok), Label::OKButton()),
-			`HSpacing(1),
+	                `HSpacing(1),
 			`PushButton(`id(`cancel), Label::CancelButton())
-		)
-	));
+                )
+        ));
 
 	any ret = nil;
 	while (true) {
-        ret = UI::UserInput();
+	        ret = UI::UserInput();
 		if (ret == `ok) {
 			string cmd = (string) UI::QueryWidget(`id("cmd"), `Value);
 			string params = (string) UI::QueryWidget(`id("params"), `Value);
+
+			if (!ValidateCommand(cmd)){
+				UI::SetFocus(`id("cmd"));
+				continue;
+			}
+
 			new_command = cmd + " " + params;
 			break;
-	     } else if (ret == `cancel) {
+
+	        } else if (ret == `cancel) {
+			new_command = "";
 			break;
-		} else if (ret == "browse_c") {
+
+	        } else if (ret == "browse_c") {
 			string new_cmd = UI::AskForExistingFile("/", "*", "Choose a command");
 			UI::ChangeWidget(`id("cmd"),`Value, new_cmd);
-		}
+	        }
 
-    }
+        }
 	UI::CloseDialog();
 	return new_command; 
 }
@@ -191,6 +219,10 @@ list <term> UpdateCmdList (list <string> members) {
     symbol WriteDialog() {
 	Wizard::RestoreHelp(HELPS["write"]:"");
 	boolean ret = Sudo::Write();
+
+	//yes-no popup - an error occured when saving the configuration
+	if ( !ret && Popup::YesNo(_("Saving sudoers configuration failed. Change the settings?")) ) 
+		return `back;
 	return ret ? `next : `abort;
     }
 }

@@ -123,7 +123,7 @@ any AddEditUserSpecDialog(string what) {
 		} else if (ret == "command_add") {
 			string new_command = AddCommandDialog("","");
 
-			if(!contains(commands, new_command)) {
+			if(new_command != "" && !contains(commands, new_command)) {
 				commands = add(commands, new_command);
 				RedrawCmndTable(commands);
 			}
