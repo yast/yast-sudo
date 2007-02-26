@@ -137,7 +137,7 @@ string AddCommandDialog(string c, string p) {
 						)
 					),
 	                                `Left(`TextEntry(`id("params"),_("Parameters (optional)"), p))
-:				),
+				),
 				`VSpacing(0.5)
 			)
 		),
