@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Mar  1 10:42:26 CET 2007 - kmachalkova@suse.cz
+
+- Added checking for root permissions into the module startup
+- 2.15.2
+
+-------------------------------------------------------------------
 Mon Feb 26 15:07:28 CET 2007 - kmachalkova@suse.cz
 
 - Added syntax checking of created file (#227397)
