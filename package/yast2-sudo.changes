@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Mar  9 19:21:23 CET 2007 - kmachalkova@suse.cz
+
+- Removed yast2-core and yast2_theme dependency (used Conflicts: tag
+  instead)
+ 
+-------------------------------------------------------------------
 Thu Mar  1 10:42:26 CET 2007 - kmachalkova@suse.cz
 
 - Added checking for root permissions into the module startup

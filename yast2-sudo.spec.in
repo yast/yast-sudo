@@ -3,9 +3,9 @@
 @HEADER@
 Requires:	yast2 yast2-users
 #ycp::PathComponents
-Requires: yast2-core >= 2.13.29
+Conflicts: yast2-core < 2.13.29
 #Sudo icons
-Requires: yast2_theme >= 2.13.9
+Conflicts: yast2_theme < 2.13.9
 BuildRequires:	perl-XML-Writer update-desktop-files yast2 yast2-devtools yast2-testsuite yast2-users
 
 BuildArchitectures:	noarch
