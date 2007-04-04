@@ -2,7 +2,7 @@
 Fri Mar  9 19:21:23 CET 2007 - kmachalkova@suse.cz
 
 - Removed yast2-core and yast2_theme dependency (used Conflicts: tag
-  instead)
+  instead)(#253001)
 - 2.15.3
  
 -------------------------------------------------------------------
