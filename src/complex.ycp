@@ -103,7 +103,6 @@ string AddHostDialog(string host)  {
 			}
 			break;
 	     } else if (ret == `cancel) {
-			new_host="";
 			break;
 	     }
 	}
@@ -112,7 +111,7 @@ string AddHostDialog(string host)  {
 }
 
 boolean ValidateCommand(string cmd){
-	if(FileUtils::Exists(cmd) || haskey(Sudo::GetCmndAliases(), cmd) )
+	if(FileUtils::Exists(cmd) || haskey(Sudo::GetCmndAliases(), cmd) || cmd == "ALL" )
 		return true;
 	else {
 	    Popup::Error(sformat(_("File, directory or command alias '%1' does not exist."), cmd));
@@ -123,6 +122,10 @@ boolean ValidateCommand(string cmd){
 string AddCommandDialog(string c, string p) {
 	string new_command = c + p;
 
+        list <string> items = Sudo::GetAliasNames("command");
+
+        items = prepend( items, "ALL");
+
 	UI::OpenDialog(`opt(`decorated), `VBox(
                 `Frame(
                         _("Add new command with optional parameters"),
@@ -130,13 +133,13 @@ string AddCommandDialog(string c, string p) {
 				`VSpacing(0.5),
 				`VBox(
 					`HBox(
-						`MinWidth(40,`Left(`TextEntry(`id("cmd"), _("Command"), c))),
+					`MinWidth(40,`ComboBox(`id("cmd"), `opt(`editable), _("Command")), items),
 	                                        `VBox(
 							`VSpacing(1.1),
 		                                        `PushButton(`id("browse_c"),_("Browse"))
 						)
 					),
-	                                `Left(`TextEntry(`id("params"),_("Parameters (optional)"), p))
+                                      `Left(`TextEntry(`id("params"),_("Parameters (optional)"), p))
 				),
 				`VSpacing(0.5)
 			)
@@ -148,6 +151,8 @@ string AddCommandDialog(string c, string p) {
 			`PushButton(`id(`cancel), Label::CancelButton())
                 )
         ));
+
+        UI::ChangeWidget(`id("cmd"), `Value, c);
 
 	any ret = nil;
 	while (true) {
@@ -165,7 +170,6 @@ string AddCommandDialog(string c, string p) {
 			break;
 
 	        } else if (ret == `cancel) {
-			new_command = "";
 			break;
 
 	        } else if (ret == "browse_c") {

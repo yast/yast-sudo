@@ -357,6 +357,7 @@ global list <string> GetAliasNames (string what) {
 		case ("user"): return (maplist (string key, list <string> val, user_aliases,{ return key; }));
 		case ("run_as"): return (maplist (string key, list <string> val, runas_aliases,{ return key; }));
 		case ("host"): return (maplist (string key, list <string> val, host_aliases,{ return key; }));
+		case ("command"): return (maplist (string key, list <string> val, cmnd_aliases,{ return key; }));
 		default: return [];
 	}
 }
