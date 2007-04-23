@@ -1,9 +1,17 @@
 -------------------------------------------------------------------
+Mon Apr 23 13:33:28 CEST 2007 - kmachalkova@suse.cz
+
+- Accept 'ALL' as a valid command alias (#263414)
+- Make command selection an editable combobox and show available 
+  cmnd aliases (+ 'ALL') to the user
+- Append 'ALL' to the selection of available hosts
+- 2.15.3
+
+-------------------------------------------------------------------
 Fri Mar  9 19:21:23 CET 2007 - kmachalkova@suse.cz
 
 - Removed yast2-core and yast2_theme dependency (used Conflicts: tag
   instead)(#253001)
-- 2.15.3
  
 -------------------------------------------------------------------
 Thu Mar  1 10:42:26 CET 2007 - kmachalkova@suse.cz
