@@ -26,7 +26,7 @@ any AddEditUserSpecDialog(string what) {
 	map <string, any> spec = $[];
 	list <string> commands = [];
 	list <string> users = (list <string>) merge(Sudo::all_users, Sudo::GetAliasNames("user"));
-	list <string> hosts = Sudo::GetAliasNames("host");
+	list <string> hosts = prepend( Sudo::GetAliasNames("host"), "ALL") ;
 	list <string> run_as = (list <string>) merge(Sudo::all_users, Sudo::GetAliasNames("run_as"));
 
 	if (what == "Add") {
