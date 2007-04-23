@@ -133,7 +133,7 @@ string AddCommandDialog(string c, string p) {
 				`VSpacing(0.5),
 				`VBox(
 					`HBox(
-					`MinWidth(40,`ComboBox(`id("cmd"), `opt(`editable), _("Command")), items),
+						`MinWidth(40,`ComboBox(`id("cmd"), `opt(`editable), _("Command"), items)),
 	                                        `VBox(
 							`VSpacing(1.1),
 		                                        `PushButton(`id("browse_c"),_("Browse"))
