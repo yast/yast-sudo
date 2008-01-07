@@ -60,7 +60,7 @@ boolean ValidateHost(string hostname) {
 			netmask = "";
 			Popup::Error( _("A valid netmask is either in dotted quad notation 
 (4 integers in the range 128 - 255 separated by dots) 
-or single integer in the range 0 - 32" ) );
+or single integer in the range 0 - 32") );
 		return false;
 		}
 	}
@@ -230,7 +230,7 @@ list <term> UpdateCmdList (list <string> members) {
 	boolean ret = Sudo::Write();
 
 	//yes-no popup - an error occured when saving the configuration
-	if ( !ret && Popup::YesNo(_("Saving sudoers configuration failed. Change the settings?")) ) 
+	if ( !ret && Popup::YesNo(_("Saving sudoer's configuration failed. Change the settings?")) ) 
 		return `back;
 	return ret ? `next : `abort;
     }
