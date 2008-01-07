@@ -99,7 +99,9 @@ symbol HandleHostAliases(string key, map event) {
 		boolean confirm_delete = true;
 
 		if(Sudo::SearchUserSpec("host",current_alias_name)) {
-			if (!Popup::ContinueCancel (sformat(_("Host alias %1 is being used in one of user specifications.\nDeleting it may result in inconsistent sudo configuration file. Really delete it ?"), current_alias_name)))
+			if (!Popup::ContinueCancel (sformat(_("Host alias %1 is being used in one of the user specifications.
+Deleting it may result in an inconsistent sudo configuration file. Really delete it ?
+"), current_alias_name)))
 				confirm_delete = false;
 		}
 
@@ -141,7 +143,9 @@ symbol HandleUserAliases(string key, map event) {
 		boolean confirm_delete = true;
 
 		if(Sudo::SearchUserSpec("user",current_alias_name)) {
-			if ( !Popup::ContinueCancel (sformat(_("User alias %1 is being used in one of user specifications.\nDeleting it may result in inconsistent sudo configuration file. Really delete it ?"), current_alias_name))) 
+			if ( !Popup::ContinueCancel (sformat(_("User alias %1 is being used in one of the user specifications.
+Deleting it may result in an inconsistent sudo configuration file. Really delete it ?
+"), current_alias_name))) 
 				confirm_delete = false;
 		}
 
@@ -182,7 +186,9 @@ symbol HandleRunAsAliases(string key, map event) {
 		boolean confirm_delete = true;
 
 		if(Sudo::SearchUserSpec("run_as","(" + current_alias_name + ")")) {
-			if (!Popup::ContinueCancel (sformat(_("RunAs alias %1 is being used in one of user specifications.\nDeleting it may result in inconsistent sudo configuration file. Really delete it ?"), current_alias_name)))
+			if (!Popup::ContinueCancel (sformat(_("RunAs alias %1 is being used in one of the user specifications.
+Deleting it may result in an inconsistent sudo configuration file. Really delete it ?
+"), current_alias_name)))
 				confirm_delete = false;
 		}
 
@@ -225,7 +231,9 @@ symbol HandleCmndAliases(string key, map event) {
 		boolean confirm_delete = true;
 
 		if(Sudo::SearchUserSpec("commands",current_alias_name)) {
-			if (!Popup::ContinueCancel (sformat(_("Command alias %1 is being used in one of user specifications.\nDeleting it may result in inconsistent sudo configuration file. Really delete it ?"), current_alias_name)))
+			if (!Popup::ContinueCancel (sformat(_("Command alias %1 is being used in one of the user specifications.
+Deleting it may result in an inconsistent sudo configuration file. Really delete it ?
+"), current_alias_name)))
 				confirm_delete = false;
 		}
 
