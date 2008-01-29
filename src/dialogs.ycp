@@ -316,9 +316,9 @@ map <string, map <string,any> > tabs = $[
 							), []
 						),
 						`HBox (
-							`PushButton(`id("add_spec")," " + Label::AddButton() + " "),
-							`PushButton(`id("edit_spec")," " + Label::EditButton() + " "),
-							`PushButton(`id("delete_spec")," " + Label::DeleteButton() + " ")
+							`PushButton(`id("add_spec"), `opt(`key_F3), " " + Label::AddButton() + " "),
+							`PushButton(`id("edit_spec"), `opt(`key_F4), " " + Label::EditButton() + " "),
+							`PushButton(`id("delete_spec"),`opt(`key_F5), " " + Label::DeleteButton() + " ")
 						)
 					),
 		"caption" : sudo_caption + ": " + _("Rules for sudo"),
@@ -335,9 +335,9 @@ map <string, map <string,any> > tabs = $[
 							), []
 						),
 						`HBox (
-							`PushButton(`id("add_user_alias")," " + Label::AddButton() + " "),
-							`PushButton(`id("edit_user_alias")," " + Label::EditButton() + " "),
-							`PushButton(`id("delete_user_alias")," " + Label::DeleteButton() + " ")
+							`PushButton(`id("add_user_alias"), `opt(`key_F3), " " + Label::AddButton() + " "),
+							`PushButton(`id("edit_user_alias"), `opt(`key_F4), " " + Label::EditButton() + " "),
+							`PushButton(`id("delete_user_alias"), `opt(`key_F5), " " + Label::DeleteButton() + " ")
 						)
 
 					),
@@ -355,9 +355,9 @@ map <string, map <string,any> > tabs = $[
 							), []
 						),
 						`HBox (
-							`PushButton(`id("add_runas_alias")," " + Label::AddButton() + " "),
-							`PushButton(`id("edit_runas_alias")," " + Label::EditButton() + " "),
-							`PushButton(`id("delete_runas_alias")," " + Label::DeleteButton() + " ")
+							`PushButton(`id("add_runas_alias"), `opt(`key_F3), " " + Label::AddButton() + " "),
+							`PushButton(`id("edit_runas_alias"), `opt(`key_F4), " " + Label::EditButton() + " "),
+							`PushButton(`id("delete_runas_alias"), `opt(`key_F5), " " + Label::DeleteButton() + " ")
 						)
 
 					),
@@ -375,9 +375,9 @@ map <string, map <string,any> > tabs = $[
 							), []
 						),
 						`HBox (
-							`PushButton(`id("add_host_alias")," " + Label::AddButton() + " "),
-							`PushButton(`id("edit_host_alias")," " + Label::EditButton() + " "),
-							`PushButton(`id("delete_host_alias")," " + Label::DeleteButton() + " ")
+							`PushButton(`id("add_host_alias"), `opt(`key_F3), " " + Label::AddButton() + " "),
+							`PushButton(`id("edit_host_alias"), `opt(`key_F4), " " + Label::EditButton() + " "),
+							`PushButton(`id("delete_host_alias"), `opt(`key_F5), " " + Label::DeleteButton() + " ")
 						)
 
 					),
@@ -395,9 +395,9 @@ map <string, map <string,any> > tabs = $[
 							), []
 						),
 						`HBox (
-							`PushButton(`id("add_command_alias")," " + Label::AddButton() + " "),
-							`PushButton(`id("edit_command_alias")," " + Label::EditButton() + " "),
-							`PushButton(`id("delete_command_alias")," " + Label::DeleteButton() + " ")
+							`PushButton(`id("add_command_alias"), `opt(`key_F3), " " + Label::AddButton() + " "),
+							`PushButton(`id("edit_command_alias"), `opt(`key_F4), " " + Label::EditButton() + " "),
+							`PushButton(`id("delete_command_alias"), `opt(`key_F5), " " + Label::DeleteButton() + " ")
 						)
 
 					),
@@ -411,12 +411,13 @@ any RunSudoDialogs() {
 
 	list <string> tree_dialogs = ["user_specs", "user_aliases", "runas_aliases", "host_aliases", "cmnd_aliases"];
 
+
 	return DialogTree::ShowAndRun ($[
 		"ids_order" : tree_dialogs,
 		"initial_screen" : initial_screen,
 		"screens" : tabs,
 		"widget_descr" : widgets_handling,
-		"back_button" : "",
+		"back_button" : Label::BackButton(),
 		"abort_button" : Label::AbortButton(),
 		"next_button" : Label::FinishButton(),
 		"functions" : functions,
