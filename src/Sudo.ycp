@@ -35,13 +35,14 @@
 module "Sudo";
 textdomain "sudo";
 
+import "Message";
 import "Progress";
 import "Report";
-import "Summary";
-import "Message";
-import "Service";
 import "Popup";
+import "Service";
 import "SCR";
+import "String";
+import "Summary";
 import "Users";
 import "UsersCache";
 
@@ -62,6 +63,8 @@ global boolean GetModified() {
 global void SetModified() {
     modified = true;
 }
+
+global string ValidCharsUsername = deletechars (String::CGraph (), "'\"") + " ";
 
 map <string, list < list <string> > > settings = $[];
 map <string, list<string> > host_aliases = $[];
