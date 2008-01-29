@@ -120,7 +120,11 @@ boolean ReadSudoSettings() {
 				default: {
 					map <string, any> m = $[];
 					list <string> cmd = [];
+
+				        if ( regexpmatch(opt_key, "^.*\\\\.*$"))
+				           opt_key = regexpsub(opt_key, "^(.*)\\\\(.*)$", "\\1\\2");
 					m["user"] = opt_key;
+
 					m["host"] = wrk[1]:"";
 
 					//match "(.*)"
@@ -265,6 +269,8 @@ boolean WriteSudoSettings() {
 	//Rest
 	foreach(map <string, any> m, user_specs,{
 		string user = (string) m["user"]:"";
+
+                user = mergestring (splitstring(user, "\\"), "\\\\");
 		string host = (string) m["host"]:"";
 		string comment = (string) m["comment"]:"";
 		string rest = (string) m["run_as"]:"" + " " + (( (boolean) m["no_passwd"]:false) ? "NOPASSWD: " : "") + mergestring((list <string>)m["commands"]:[],",");
