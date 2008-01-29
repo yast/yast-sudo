@@ -64,8 +64,8 @@ any AddEditUserSpecDialog(string what) {
 	);
 
 	Wizard::SetContentsButtons(caption, contents,HELPS["spec_single"]:"",Label::BackButton(), Label::OKButton());
-	UI::ChangeWidget(`id("user_name"),`ValidChars, "_%-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
-	UI::ChangeWidget(`id("run_as"),`ValidChars, "_%-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+	UI::ChangeWidget(`id("user_name"),`ValidChars, Sudo::ValidCharsUsername);
+	UI::ChangeWidget(`id("run_as"),`ValidChars, Sudo::ValidCharsUsername);
 
 	//initialize UI
 	UI::ChangeWidget(`id("user_name"),`Value, spec["user"]:"");
