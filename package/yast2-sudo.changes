@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Wed Jan 30 10:35:25 CET 2008 - kmachalkova@suse.cz
+
+- Extended set of valid characters for usernames (esp. \ for winbind 
+  users) 
+- Escape backslashes in usernames on write (both bnc#353499)  
+- Added some function key bindings
+- 2.16.0
+
+-------------------------------------------------------------------
 Mon Jan  7 12:16:36 CET 2008 - kmachalkova@suse.cz
 
 - Merged proofread texts 
