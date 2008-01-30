@@ -30,10 +30,10 @@ any AddEditUserSpecDialog(string what) {
 	list <string> run_as = (list <string>) merge(Sudo::all_users, Sudo::GetAliasNames("run_as"));
 
 	if (what == "Add") {
-		caption = _("New User Specification");
+		caption = _("New Sudo Rule");
 		//Setting default values
 	} else if (what == "Edit") {
-		caption = _("Existing User Specification");
+		caption = _("Existing Sudo Rule ");
 		spec = Sudo::GetUserSpecMember(current_spec_idx);
 		commands = spec["commands"]:[];
 	}
