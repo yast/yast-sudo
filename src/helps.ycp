@@ -58,9 +58,9 @@ An additional dialog informs whether it is safe to do so.
 </p>
 "),
 	/* User Specification help 1/6 */
-	"spec" : _("<p><b><big>User Specification</big></b><br>
-	User specification basically determines which commands an user may run 
-	on specified hosts (optionally also as what user). Each user specification
+	"spec" : _("<p><b><big>Rules for sudo</big></b><br>
+	Rules for sudo basically determine which commands an user may run 
+	on specified hosts (optionally also as what user). Each rule
 	is a tuple consisting of user, host and list of commands, with optional 
 	RunAs specification and additional tags. These are summarized 
 	in the following table. 
@@ -85,12 +85,12 @@ An additional dialog informs whether it is safe to do so.
 	</p>
 	") +
 	/* User Specification help 5/6 */
-	_("<p> To add a new specification, click on <b>Add</b> button and fill in appropriate 
+	_("<p> To add a new rule, click on <b>Add</b> button and fill in appropriate 
 	entries. User name, hostname and command list must not be empty.
 	</p>
 	") +
 	/* User Specification help 5/6 */
-	_("<p>To edit existing specification, select an entry from the table and click on 
+	_("<p>To edit existing rule, select an entry from the table and click on 
 	<b>Edit</b> button. To delete selected entry, click on <b>Delete</b> button.
 	</p> 
 	"),
