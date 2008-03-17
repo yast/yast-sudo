@@ -22,3 +22,4 @@ Exec=/sbin/yast2 sudo
 Name=Sudo
 GenericName=Configure sudo
 X-KDE-SubstituteUID=true
+StartupNotify=true
