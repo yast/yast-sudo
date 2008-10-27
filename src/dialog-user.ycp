@@ -57,7 +57,7 @@ any AddEditUserAliasDialog (string what) {
 				`VBox (
 					`VSpacing(1.1),
                         `PushButton ( `id ( "add_member" ), `opt ( `hstretch, `key_F3 ), " " + Label::AddButton() + " "),
-                        `PushButton ( `id ( "remove_member" ), `opt ( `hstretch, `key_F5 ), " " + Label::RemoveButton() + " "),
+                        `PushButton ( `id ( "remove_member" ), `opt ( `hstretch, `key_F5 ), " " + Label::DeleteButton() + " "),
                         `Empty(`opt(`vstretch))
                     )
                )
