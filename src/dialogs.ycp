@@ -58,11 +58,13 @@ symbol HandleUserSpecs(string key, map event) {
 
 		if (Sudo::SystemRulePopup( Sudo::GetUserSpecMember(idx), true)) {
 			Sudo::RemoveUserSpec(idx);
-			UI::ChangeWidget(`id("table_user_spec"), `Items, filter(term tmp, items,{
+			items = filter(term tmp, items,{
 				return tmp[0]:nil != `id(idx);
-			} ));
+			} ); 
+			UI::ChangeWidget(`id("table_user_spec"), `Items, items);
 			Sudo::SetModified();
 		}
+		EnableDisableButtons("edit_spec", "delete_spec", items);
 	}
 }
 
@@ -82,6 +84,7 @@ void InitUserSpecs (string key) {
 	});
 
 	UI::ChangeWidget(`id("table_user_spec"),`Items,items);
+	EnableDisableButtons("edit_spec", "delete_spec", items);
 }
 
 symbol HandleHostAliases(string key, map event) {
@@ -107,11 +110,13 @@ Deleting it may result in an inconsistent sudo configuration file. Really delete
 
 		if (confirm_delete) {
 			Sudo::RemoveHostAlias(current_alias_name);
-			UI::ChangeWidget(`id("table_host_aliases"), `Items, filter(term tmp, items, {
+			items = filter( term tmp, items, {
 				return tmp[0]:nil != `id(current_alias_name);
-			} ));
+			} );
+			UI::ChangeWidget(`id("table_host_aliases"), `Items, items);
 			Sudo::SetModified();
 		}
+		EnableDisableButtons("edit_host_alias", "delete_host_alias", items);
 	}
 
 }
@@ -125,6 +130,7 @@ void InitHostAliases(string key) {
 	});
 
 	UI::ChangeWidget(`id("table_host_aliases"),`Items,items);
+	EnableDisableButtons("edit_host_alias", "delete_host_alias", items);
 }
 
 symbol HandleUserAliases(string key, map event) {
@@ -151,11 +157,13 @@ Deleting it may result in an inconsistent sudo configuration file. Really delete
 
 		if (confirm_delete) {
 			Sudo::RemoveUserAlias(current_alias_name);
-			UI::ChangeWidget(`id("table_user_aliases"), `Items, filter(term tmp, items, {
+			items = filter(term tmp, items, {
 				return tmp[0]:nil != `id(current_alias_name);
-			}));
+			});
+			UI::ChangeWidget(`id("table_user_aliases"), `Items,  items);
 			Sudo::SetModified();
 		}
+		EnableDisableButtons("edit_user_alias", "delete_user_alias", items);
 	}
 }
 
@@ -168,6 +176,7 @@ void InitUserAliases (string key) {
 	});
 
 	UI::ChangeWidget(`id("table_user_aliases"),`Items,items);
+	EnableDisableButtons("edit_user_alias", "delete_user_alias", items);
 }
 
 symbol HandleRunAsAliases(string key, map event) {
@@ -194,11 +203,13 @@ Deleting it may result in an inconsistent sudo configuration file. Really delete
 
 		if (confirm_delete) {
 			Sudo::RemoveRunAsAlias(current_alias_name);
-			UI::ChangeWidget(`id("table_runas_aliases"), `Items, filter(term tmp, items, {
+			items = filter(term tmp, items, {
 				return tmp[0]:nil != `id(current_alias_name);
-			} ));
+			} );
+			UI::ChangeWidget(`id("table_runas_aliases"), `Items,  items);
 			Sudo::SetModified();
 		}
+		EnableDisableButtons("edit_runas_alias", "delete_runas_alias", items);
 	}
 
 }
@@ -212,6 +223,7 @@ void InitRunAsAliases (string key) {
 	});
 
 	UI::ChangeWidget(`id("table_runas_aliases"),`Items,items);
+	EnableDisableButtons("edit_runas_alias", "delete_runas_alias", items);
 
 }
 
@@ -239,11 +251,13 @@ Deleting it may result in an inconsistent sudo configuration file. Really delete
 
 		if (confirm_delete) {
 			Sudo::RemoveCmndAlias(current_alias_name);
-			UI::ChangeWidget(`id("table_command_aliases"), `Items, filter(term tmp, items, {
+			items = filter(term tmp, items, {
 				return tmp[0]:nil != `id(current_alias_name);
-			} ));
+			} );
+			UI::ChangeWidget(`id("table_command_aliases"), `Items, items );
 			Sudo::SetModified();
 		}
+		EnableDisableButtons("edit_command_alias", "delete_command_alias", items);
 	}
 
 }
@@ -257,6 +271,7 @@ void InitCmndAliases (string key) {
 	});
 
 	UI::ChangeWidget(`id("table_command_aliases"),`Items,items);
+	EnableDisableButtons("edit_command_alias", "delete_command_alias", items);
 
 }
 

@@ -48,6 +48,12 @@ string current_alias_name = "";
 integer current_spec_idx = -1;
 string initial_screen = "user_specs";
 
+void EnableDisableButtons( string edit_button, string delete_button, list <term> items )
+{
+    UI::ChangeWidget(`id(edit_button), `Enabled, (items != []) );
+    UI::ChangeWidget(`id(delete_button), `Enabled, (items != []) );
+}
+
 boolean ValidateHost(string hostname) {
 	string netmask = "";
 

@@ -19,7 +19,9 @@ any RedrawRunAsAlias(string name, list <string> members, list <string> users) {
 	foreach(string it, members, {
 		items = add(items, `item(`id(it),it));
 	});
+
 	UI::ChangeWidget(`id("runas_alias_members"),`Items, items);
+	UI::ChangeWidget(`id("remove_member"), `Enabled, (items != []));
 
 	UI::ReplaceWidget(`id("all_run_as_replace"),
 		`ComboBox(`id("all_run_as"),_("Local and System Users"),sort(string s, string t, users, ``( s < t))));
