@@ -315,11 +315,11 @@ map <string, map <string,any> > tabs = $[
 								_("Commands")
 							), []
 						),
-						`HBox (
+						`Left(`HBox (
 							`PushButton(`id("add_spec"), `opt(`key_F3), " " + Label::AddButton() + " "),
 							`PushButton(`id("edit_spec"), `opt(`key_F4), " " + Label::EditButton() + " "),
 							`PushButton(`id("delete_spec"),`opt(`key_F5), " " + Label::DeleteButton() + " ")
-						)
+						))
 					),
 		"caption" : sudo_caption + ": " + _("Rules for sudo"),
 		"tree_item_label" : _("Rules for sudo "),
@@ -334,11 +334,11 @@ map <string, map <string,any> > tabs = $[
 								_("Members")
 							), []
 						),
-						`HBox (
+						`Left(`HBox (
 							`PushButton(`id("add_user_alias"), `opt(`key_F3), " " + Label::AddButton() + " "),
 							`PushButton(`id("edit_user_alias"), `opt(`key_F4), " " + Label::EditButton() + " "),
 							`PushButton(`id("delete_user_alias"), `opt(`key_F5), " " + Label::DeleteButton() + " ")
-						)
+						))
 
 					),
 		"caption" : sudo_caption + ": " + _("User Aliases"),
@@ -354,11 +354,11 @@ map <string, map <string,any> > tabs = $[
 								_("Members")
 							), []
 						),
-						`HBox (
+						`Left(`HBox (
 							`PushButton(`id("add_runas_alias"), `opt(`key_F3), " " + Label::AddButton() + " "),
 							`PushButton(`id("edit_runas_alias"), `opt(`key_F4), " " + Label::EditButton() + " "),
 							`PushButton(`id("delete_runas_alias"), `opt(`key_F5), " " + Label::DeleteButton() + " ")
-						)
+						))
 
 					),
 		"caption" : sudo_caption + ": " + _("RunAs Aliases"),
@@ -374,11 +374,11 @@ map <string, map <string,any> > tabs = $[
 								_("Hosts")
 							), []
 						),
-						`HBox (
+						`Left(`HBox (
 							`PushButton(`id("add_host_alias"), `opt(`key_F3), " " + Label::AddButton() + " "),
 							`PushButton(`id("edit_host_alias"), `opt(`key_F4), " " + Label::EditButton() + " "),
 							`PushButton(`id("delete_host_alias"), `opt(`key_F5), " " + Label::DeleteButton() + " ")
-						)
+						))
 
 					),
 		"caption" : sudo_caption + ": " + _("Host Aliases"),
@@ -394,11 +394,11 @@ map <string, map <string,any> > tabs = $[
 								_("Commands")
 							), []
 						),
-						`HBox (
+						`Left(`HBox (
 							`PushButton(`id("add_command_alias"), `opt(`key_F3), " " + Label::AddButton() + " "),
 							`PushButton(`id("edit_command_alias"), `opt(`key_F4), " " + Label::EditButton() + " "),
 							`PushButton(`id("delete_command_alias"), `opt(`key_F5), " " + Label::DeleteButton() + " ")
-						)
+						))
 
 					),
 		"caption" : sudo_caption + ": " + _("Command Aliases"),
