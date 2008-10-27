@@ -15,6 +15,7 @@ void RedrawCmndTable (list <string> commands) {
 			list <term> items = UpdateCmdList(commands);
 
 			UI::ChangeWidget(`id("commands"),`Items, items);
+			EnableDisableButtons("command_edit", "command_remove", items);
 		}
 }
 

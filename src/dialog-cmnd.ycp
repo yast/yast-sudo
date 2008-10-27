@@ -17,6 +17,7 @@ any RedrawCmndAlias(string name, list <string> members) {
 	}
 
 	UI::ChangeWidget(`id("cmnd_alias_members"),`Items, items);
+	EnableDisableButtons("edit_command", "remove_command", items);
 
 }
 

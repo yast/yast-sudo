@@ -20,6 +20,7 @@ any RedrawUserAlias(string name, list <string> members, list <string> users) {
 		items = add(items, `item(`id(it),it));
 	});
 	UI::ChangeWidget(`id("user_alias_members"),`Items, items);
+	UI::ChangeWidget(`id("remove_member"), `Enabled, (items != []));
 
 	UI::ReplaceWidget(`id("all_users_replace"),
 		`ComboBox(`id("all_users"),_("Local and System Users"), sort(string s, string t, users, ``( s < t))));

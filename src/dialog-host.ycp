@@ -21,6 +21,7 @@ any RedrawHostAlias(string name, list <string> members) {
 	});
 
 	UI::ChangeWidget(`id("host_alias_members"),`Items, items);
+	EnableDisableButtons("edit_host", "remove_host", items);
 
 }
 
