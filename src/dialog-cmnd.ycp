@@ -33,7 +33,7 @@ any AddEditCmndAliasDialog (string what) {
 	}
 
 	term contents = `VBox (
-		`TextEntry(`id("cmnd_alias_name"),_("Alias Name")),
+		`TextEntry(`id("cmnd_alias_name"),_("Alias Name (in CAPITALS)")),
 		`Left(`Label(_("Command Names or Directories in the Alias"))),
 		`Table(`id("cmnd_alias_members"),`header(
 									_("Command"),

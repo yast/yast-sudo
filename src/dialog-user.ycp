@@ -43,7 +43,7 @@ any AddEditUserAliasDialog (string what) {
 	}
 
 	term contents = `VBox (
-		`TextEntry(`id("user_alias_name"),_("Alias Name")),
+		`TextEntry(`id("user_alias_name"),_("Alias Name (in CAPITALS)")),
 		`VSpacing(1),
 		`HBox(
 			`VBox(
