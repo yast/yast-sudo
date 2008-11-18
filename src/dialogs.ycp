@@ -42,44 +42,100 @@ include "sudo/complex.ycp";
 
 string sudo_caption = _("Sudo Configuration");
 
+list <term> CreateItems ( list <map <string, any> > aliases )
+{
+    list < term > items = [];
+    integer i = 0;
+
+    foreach( map <string, any> ent, aliases, {
+	items = add (items, `item(`id(i), ent["name"]:"", mergestring(ent["mem"]:[],",")));
+	i = i+1;
+    });
+
+    return items;
+}
+
+void SwapUIItems( integer idx1, integer idx2)
+{
+    list <term> items = (list <term>) UI::QueryWidget(`id("table_user_spec"), `Items);
+    list args1 = argsof(items[idx1]:`none());
+    list args2 = argsof(items[idx2]:`none());
+
+    items[idx1] = toterm( `item, merge([`id(idx1)], sublist(args2,1)) );
+    items[idx2] = toterm( `item, merge([`id(idx2)], sublist(args1,1)) );
+
+    UI::ChangeWidget(`id("table_user_spec"), `Items, items);
+}
+
+void SwapItems( integer idx1, integer idx2)
+{
+    map <string, any> item1 = Sudo::GetRule( idx1 );
+    map <string, any> item2 = Sudo::GetRule( idx2 );
+
+    Sudo::SetRule(idx2, item1);
+    Sudo::SetRule(idx1, item2);
+
+}
+
 symbol HandleUserSpecs(string key, map event) {
 	any ret = event["ID"]:nil;
 
 	if (ret == "add_spec") {
-		current_spec_idx = Sudo::GetUserSpecSize();
-		return `add_spec;
+	    Sudo::SetItem( size(Sudo::GetRules()) );
+	    return `add_spec;
 	} else if (ret == "edit_spec") {
-		current_spec_idx = (integer) UI::QueryWidget(`id("table_user_spec"), `CurrentItem);
-		if (Sudo::SystemRulePopup( Sudo::GetUserSpecMember(current_spec_idx), false)) 
-			return `edit_spec;
+	    integer idx = (integer) UI::QueryWidget(`id("table_user_spec"), `CurrentItem);
+	    Sudo::SetItem( idx );
+	    if (Sudo::SystemRulePopup( Sudo::GetRule(idx), false)) 
+		return `edit_spec;
 	} else if (ret == "delete_spec") {
 		integer idx = (integer) UI::QueryWidget(`id("table_user_spec"), `CurrentItem);
 		list <term> items = (list <term>) UI::QueryWidget(`id("table_user_spec"), `Items);
 
-		if (Sudo::SystemRulePopup( Sudo::GetUserSpecMember(idx), true)) {
-			Sudo::RemoveUserSpec(idx);
-			items = filter(term tmp, items,{
-				return tmp[0]:nil != `id(idx);
-			} ); 
-			UI::ChangeWidget(`id("table_user_spec"), `Items, items);
-			Sudo::SetModified();
+		if (Sudo::SystemRulePopup( Sudo::GetRule(idx), true)) {
+		    Sudo::RemoveRule(idx);
+		    items = remove(items, idx);
+
+		    integer i = 0;
+		    items = maplist(term tmp, items,{
+		        list args = argsof( tmp );
+		        term t = toterm( `item, merge ([`id(i)], sublist( args,1 )) );
+			i = i+1;
+			return t;
+		    } ); 
+		    UI::ChangeWidget(`id("table_user_spec"), `Items, items);
+		    Sudo::SetModified();
 		}
 		EnableDisableButtons("edit_spec", "delete_spec", items);
+	} else if ( ret == "up"){
+	    integer idx = (integer) UI::QueryWidget(`id("table_user_spec"), `CurrentItem);
+	    if (idx != 0) {
+	        SwapItems( idx, idx - 1);
+		SwapUIItems( idx, idx - 1 );
+	    }
+	} else if ( ret == "down"){
+	    integer idx = (integer) UI::QueryWidget(`id("table_user_spec"), `CurrentItem);
+	    if ( idx != (size( Sudo::GetRules())-1) ) {
+	        SwapItems( idx, idx + 1 );
+		SwapUIItems( idx, idx + 1 );
+	    }
 	}
 }
 
 void InitUserSpecs (string key) {
 	list <term> items = [];
-	list <map <string,any> > specs = Sudo::GetUserSpecs();
+	list <map <string,any> > rules = Sudo::GetRules();
 	integer idx = 0;
 
-	foreach(map <string, any> wrk, specs, {
-		string cmds = "";
-		if (size(wrk["commands"]:[]) > 1) {
-			 cmds = mergestring(wrk["commands"]:[],",");
-		} else
-			cmds = (wrk["commands"]:[])[0]:""; 
-		items = add(items, `item(`id(idx), (string) wrk["user"]:"", (string) wrk["host"]:"", (string) wrk["run_as"]:"",(wrk["no_passwd"]:false)? _("Yes") : _("No"), cmds));
+	foreach(map <string, any> ent, rules, {
+	    string cmds = "";
+	    if (size(ent["commands"]:[]) > 1) {
+		 cmds = mergestring(ent["commands"]:[],",");
+	    }
+	    else
+		cmds = (ent["commands"]:[])[0]:"";
+
+	    items = add(items, `item(`id(idx), (string) ent["user"]:"", (string) ent["host"]:"", (string) ent["run_as"]:"",(ent["no_passwd"]:false)? _("Yes") : _("No"), cmds));
 		idx = idx + 1;
 	});
 
@@ -90,29 +146,34 @@ void InitUserSpecs (string key) {
 symbol HandleHostAliases(string key, map event) {
 	any ret = event["ID"]:nil;
 
-	if (ret == "add_host_alias") {
-		current_alias_name = "";
-		return `add_h_alias;
-	} else if (ret == "edit_host_alias") {
-		current_alias_name = (string) UI::QueryWidget(`id("table_host_aliases"), `CurrentItem);
-		return `edit_h_alias;
-	} else if (ret == "delete_host_alias") {
-		current_alias_name = (string) UI::QueryWidget(`id("table_host_aliases"),`CurrentItem);
+	if (ret == "add_host_alias") 
+	{
+	    Sudo::SetItem( size( Sudo::GetHostAliases2()) );
+	    //current_alias_name = "";
+	    return `add_h_alias;
+	}
+	else if (ret == "edit_host_alias")
+	{
+	    Sudo::SetItem( (integer) UI::QueryWidget(`id("table_host_aliases"), `CurrentItem) );
+	    return `edit_h_alias;
+	}
+	else if (ret == "delete_host_alias") {
+		integer idx = (integer) UI::QueryWidget(`id("table_host_aliases"),`CurrentItem);
 		list <term> items = (list <term>) UI::QueryWidget(`id("table_host_aliases"), `Items);
+		string name = Sudo::GetHostAliases2()[idx, "name"]:"";
+
 		boolean confirm_delete = true;
 
-		if(Sudo::SearchUserSpec("host",current_alias_name)) {
+		if(Sudo::SearchRules("host",name)) {
 			if (!Popup::ContinueCancel (sformat(_("Host alias %1 is being used in one of sudo rules.
 Deleting it may result in an inconsistent sudo configuration file. Really delete it ?
-"), current_alias_name)))
+"), name)))
 				confirm_delete = false;
 		}
 
 		if (confirm_delete) {
-			Sudo::RemoveHostAlias(current_alias_name);
-			items = filter( term tmp, items, {
-				return tmp[0]:nil != `id(current_alias_name);
-			} );
+			Sudo::RemoveHostAlias2( idx );
+			items = CreateItems( Sudo::GetHostAliases2());
 			UI::ChangeWidget(`id("table_host_aliases"), `Items, items);
 			Sudo::SetModified();
 		}
@@ -122,12 +183,8 @@ Deleting it may result in an inconsistent sudo configuration file. Really delete
 }
 
 void InitHostAliases(string key) {
-	list <term> items = [];
-	map <string, list<string> > aliases = Sudo::GetHostAliases();
-
-	foreach(string key, list<string> value, aliases, {
-		items = add (items, `item(`id(key), key, mergestring(value,",")));
-	});
+	list <map <string, any> > aliases = Sudo::GetHostAliases2();
+	list <term> items = CreateItems( aliases );
 
 	UI::ChangeWidget(`id("table_host_aliases"),`Items,items);
 	EnableDisableButtons("edit_host_alias", "delete_host_alias", items);
@@ -137,29 +194,29 @@ symbol HandleUserAliases(string key, map event) {
 	any ret = event["ID"]:nil;
 
 	if (ret == "add_user_alias") {
-		/* No alias name set so far */
-		current_alias_name = "";
-		return `add_u_alias;
+	    /* No alias name set so far */
+	    Sudo::SetItem( size( Sudo::GetUserAliases2()) );
+	    return `add_u_alias;
 	} else if (ret == "edit_user_alias") {
-		current_alias_name = (string) UI::QueryWidget(`id("table_user_aliases"),`CurrentItem);
-		return `edit_u_alias;
+	    Sudo::SetItem( (integer) UI::QueryWidget(`id("table_user_aliases"),`CurrentItem) );
+	    return `edit_u_alias;
 	} else if (ret == "delete_user_alias") {
-		current_alias_name = (string) UI::QueryWidget(`id("table_user_aliases"),`CurrentItem);
+		integer idx = (integer) UI::QueryWidget(`id("table_user_aliases"),`CurrentItem);
 		list <term> items = (list <term>) UI::QueryWidget(`id("table_user_aliases"), `Items);
+		string name = Sudo::GetUserAliases2()[idx, "name"]:"";
+
 		boolean confirm_delete = true;
 
-		if(Sudo::SearchUserSpec("user",current_alias_name)) {
+		if(Sudo::SearchRules("user",name)) {
 			if ( !Popup::ContinueCancel (sformat(_("User alias %1 is being used in one of sudo rules .
 Deleting it may result in an inconsistent sudo configuration file. Really delete it ?
-"), current_alias_name))) 
-				confirm_delete = false;
+"), name))) 
+			confirm_delete = false;
 		}
 
 		if (confirm_delete) {
-			Sudo::RemoveUserAlias(current_alias_name);
-			items = filter(term tmp, items, {
-				return tmp[0]:nil != `id(current_alias_name);
-			});
+			Sudo::RemoveUserAlias2( idx );
+			items = CreateItems( Sudo::GetUserAliases2());
 			UI::ChangeWidget(`id("table_user_aliases"), `Items,  items);
 			Sudo::SetModified();
 		}
@@ -168,12 +225,8 @@ Deleting it may result in an inconsistent sudo configuration file. Really delete
 }
 
 void InitUserAliases (string key) {
-	list <term> items = [];
-	map <string, list<string> > aliases = Sudo::GetUserAliases();
-
-	foreach(string key, list<string> value, aliases, {
-		items = add (items, `item(`id(key), key, mergestring(value,",")));
-	});
+	list < map <string, any> > aliases = Sudo::GetUserAliases2();
+	list <term> items = CreateItems( aliases );
 
 	UI::ChangeWidget(`id("table_user_aliases"),`Items,items);
 	EnableDisableButtons("edit_user_alias", "delete_user_alias", items);
@@ -184,28 +237,28 @@ symbol HandleRunAsAliases(string key, map event) {
 
 	if (ret == "add_runas_alias") {
 		/* No alias name set so far */
-		current_alias_name = "";
-		return `add_r_alias;
+	    Sudo::SetItem( size(Sudo::GetRunAsAliases2()) );
+	    return `add_r_alias;
 	} else if (ret == "edit_runas_alias") {
-		current_alias_name = (string) UI::QueryWidget(`id("table_runas_aliases"),`CurrentItem);
-		return `edit_r_alias;
+	    Sudo::SetItem( (integer) UI::QueryWidget(`id("table_runas_aliases"),`CurrentItem));
+	    return `edit_r_alias;
 	} else if (ret == "delete_runas_alias") {
-		current_alias_name = (string) UI::QueryWidget(`id("table_runas_aliases"),`CurrentItem);
+		integer idx = (integer) UI::QueryWidget(`id("table_runas_aliases"),`CurrentItem);
 		list <term> items = (list <term>) UI::QueryWidget(`id("table_runas_aliases"), `Items);
+		string name = Sudo::GetRunAsAliases2()[idx, "name"]:"";
+
 		boolean confirm_delete = true;
 
-		if(Sudo::SearchUserSpec("run_as","(" + current_alias_name + ")")) {
+		if(Sudo::SearchRules("run_as","(" + name + ")")) {
 			if (!Popup::ContinueCancel (sformat(_("RunAs alias %1 is being used in one of sudo rules.
 Deleting it may result in an inconsistent sudo configuration file. Really delete it ?
-"), current_alias_name)))
+"), name)))
 				confirm_delete = false;
 		}
 
 		if (confirm_delete) {
-			Sudo::RemoveRunAsAlias(current_alias_name);
-			items = filter(term tmp, items, {
-				return tmp[0]:nil != `id(current_alias_name);
-			} );
+			Sudo::RemoveRunAsAlias2( idx );
+			items = CreateItems( Sudo::GetRunAsAliases2());
 			UI::ChangeWidget(`id("table_runas_aliases"), `Items,  items);
 			Sudo::SetModified();
 		}
@@ -215,12 +268,8 @@ Deleting it may result in an inconsistent sudo configuration file. Really delete
 }
 
 void InitRunAsAliases (string key) {
-	list <term> items = [];
-	map <string, list<string> > aliases = Sudo::GetRunAsAliases();
-
-	foreach(string key, list<string> value, aliases, {
-		items = add (items, `item(`id(key), key, mergestring(value,",")));
-	});
+        list < map <string, any> > aliases = Sudo::GetRunAsAliases2();
+	list <term> items = CreateItems( aliases );
 
 	UI::ChangeWidget(`id("table_runas_aliases"),`Items,items);
 	EnableDisableButtons("edit_runas_alias", "delete_runas_alias", items);
@@ -232,28 +281,27 @@ symbol HandleCmndAliases(string key, map event) {
 
 	if (ret == "add_command_alias") {
 		/* No alias name set so far */
-		current_alias_name = "";
-		return `add_c_alias;
+	   Sudo::SetItem( size(Sudo::GetCmndAliases2()) );
+	   return `add_c_alias;
 	} else if (ret == "edit_command_alias") {
-		current_alias_name = (string) UI::QueryWidget(`id("table_command_aliases"),`CurrentItem);
-		return `edit_c_alias;
+	    Sudo::SetItem( (integer) UI::QueryWidget(`id("table_command_aliases"),`CurrentItem) );
+	    return `edit_c_alias;
 	} else if (ret == "delete_command_alias") {
-		current_alias_name = (string) UI::QueryWidget(`id("table_command_aliases"),`CurrentItem);
+		integer idx = (integer) UI::QueryWidget(`id("table_command_aliases"),`CurrentItem);
 		list <term> items = (list <term>) UI::QueryWidget(`id("table_command_aliases"), `Items);
+		string name = Sudo::GetCmndAliases2()[idx, "name"]:"";
 		boolean confirm_delete = true;
 
-		if(Sudo::SearchUserSpec("commands",current_alias_name)) {
+		if(Sudo::SearchRules("commands",name)) {
 			if (!Popup::ContinueCancel (sformat(_("Command alias %1 is being used in one of sudo rules.
 Deleting it may result in an inconsistent sudo configuration file. Really delete it ?
-"), current_alias_name)))
+"), name)))
 				confirm_delete = false;
 		}
 
 		if (confirm_delete) {
-			Sudo::RemoveCmndAlias(current_alias_name);
-			items = filter(term tmp, items, {
-				return tmp[0]:nil != `id(current_alias_name);
-			} );
+			Sudo::RemoveCmndAlias2( idx );
+			items = CreateItems( Sudo::GetCmndAliases2());
 			UI::ChangeWidget(`id("table_command_aliases"), `Items, items );
 			Sudo::SetModified();
 		}
@@ -263,12 +311,8 @@ Deleting it may result in an inconsistent sudo configuration file. Really delete
 }
 
 void InitCmndAliases (string key) {
-	list <term> items = [];
-	map <string, list<string> > aliases = Sudo::GetCmndAliases();
-
-	foreach(string key, list<string> value, aliases, {
-		items = add (items, `item(`id(key), key, mergestring(value,",")));
-	});
+        list < map <string, any> > aliases = Sudo::GetCmndAliases2();
+	list <term> items = CreateItems( aliases );
 
 	UI::ChangeWidget(`id("table_command_aliases"),`Items,items);
 	EnableDisableButtons("edit_command_alias", "delete_command_alias", items);
@@ -320,8 +364,10 @@ map<symbol,any> functions = $[
 map <string, map <string,any> > tabs = $[
 	"user_specs" : $[
 		"contents" : `VBox(
+					`HBox(
 						`Table(
 							`id("table_user_spec"),
+							`opt(`keepSorting),
 							`header (
 								_("Users"),
 								_("Hosts"),
@@ -330,11 +376,18 @@ map <string, map <string,any> > tabs = $[
 								_("Commands")
 							), []
 						),
-						`Left(`HBox (
+						`VBox(
+							`PushButton(`id("up"), _("Up")),
+							`PushButton(`id("down"), _("Down"))
+						
+						)
+					),
+					`Left(`HBox (
 							`PushButton(`id("add_spec"), `opt(`key_F3), " " + Label::AddButton() + " "),
 							`PushButton(`id("edit_spec"), `opt(`key_F4), " " + Label::EditButton() + " "),
 							`PushButton(`id("delete_spec"),`opt(`key_F5), " " + Label::DeleteButton() + " ")
 						))
+					 
 					),
 		"caption" : sudo_caption + ": " + _("Rules for sudo"),
 		"tree_item_label" : _("Rules for sudo "),
@@ -344,6 +397,7 @@ map <string, map <string,any> > tabs = $[
 		"contents" : `VBox(
 						`Table(
 							`id("table_user_aliases"),
+							`opt(`keepSorting),
 							`header (
 								_("Alias Name"),
 								_("Members")
@@ -364,6 +418,7 @@ map <string, map <string,any> > tabs = $[
 		"contents" : `VBox(
 						`Table(
 							`id("table_runas_aliases"),
+							`opt(`keepSorting),
 							`header (
 								_("Alias Name"),
 								_("Members")
@@ -384,6 +439,7 @@ map <string, map <string,any> > tabs = $[
 		"contents" : `VBox(
 						`Table(
 							`id("table_host_aliases"),
+							`opt(`keepSorting),
 							`header (
 								_("Alias Name"),
 								_("Hosts")
@@ -404,6 +460,7 @@ map <string, map <string,any> > tabs = $[
 		"contents" : `VBox(
 						`Table(
 							`id("table_command_aliases"),
+							`opt(`keepSorting),
 							`header (
 								_("Alias Name"),
 								_("Commands")

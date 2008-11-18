@@ -35,7 +35,7 @@ any AddEditUserSpecDialog(string what) {
 		//Setting default values
 	} else if (what == "Edit") {
 		caption = _("Existing Sudo Rule ");
-		spec = Sudo::GetUserSpecMember(current_spec_idx);
+		spec = Sudo::GetRule( Sudo::GetItem() );
 		commands = spec["commands"]:[];
 	}
 
@@ -114,7 +114,7 @@ any AddEditUserSpecDialog(string what) {
 			if (spec["run_as"]:"" != "") {
 				spec["run_as"] = "(" + spec["run_as"]:"" + ")";
 			}
-			Sudo::SetUserSpecMember(current_spec_idx,spec);
+			Sudo::SetRule( Sudo::GetItem(),spec);
 			Sudo::SetModified();
 	          break;
 		/* back */
