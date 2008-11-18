@@ -11,7 +11,7 @@ use Data::Dumper;
 
 my $filename = "/etc/sudoers";
 
-my %data; #= (
+my @data2 = ();  #= (
 #		"Host_Alias" => [ ["# Host Alias Specification","SERVERS", "ns, www, mail"],["","FOO", "www.foo.org"] ],
 #		"User_Alias" => [ ["# User Alias Specification", "BAT","foobar"], ["","WWW", "wwwrun"] ],
 #		"Cmnd_Alias" => [ ["# Command Alias Specification", "HALT", "/usr/sbin/halt, /usr/sbin/shutdown -h now,"], ["","REBOOT", "/sbin/reboot"] ],
@@ -20,6 +20,8 @@ my %data; #= (
 #		'root' => [ ["# User privilege specification", "ALL", "(ALL) ALL"] ],	
 #		'%wheel' => [ ["# Same thing without password", "ALL",  "(ALL) NOPASSWD: HALT,REBOOT"] ],	
 #	);
+
+
 
 sub parse_file {
 
@@ -37,18 +39,19 @@ sub parse_file {
 			next; 
 		}
 
-		my $alias	= "";	
-		my @entry = ();
+	        my $alias       = "";
+
+		my @entry2 = ();
 		if (/^(\S+)\s+(\S+)\s*=\s*([^#]*)/) {
 			$alias =$1;
-			push(@entry,$comment,$2,$3);
+			push(@entry2, $comment, $alias, $2, $3);
 		}	
 		elsif (/^(\S+)\s+(\S+)/) {
 			$alias =$1;
-			push(@entry,$comment,$2,"");
+			push(@entry2, $comment, $alias, $2);
 		}
 	
-		push (@{$data{$alias}}, \@entry);
+		push (@data2, \@entry2);
 
 		$comment = "";
 	}
@@ -57,26 +60,18 @@ sub parse_file {
 	return 1;
 }
 
-sub store_key {
-	my $key = $_[0];
+sub store_line {
+	my $line = $_[0];
+	my ($comment, $type, $name, $members) = @{$line};
 
-	if (exists ($data{$key})) {
-		my @key_data = @{$data{$key}};
-		foreach my $entry (@key_data) {
-			my ($comment, $name, $members) = @{$entry};
-	
-			if($comment){
-				print OUTFILE $comment;
-			}
-			if($name) {
-				if($members) {
-					print OUTFILE $key,"\t", $name, " = ", $members, "\n";
-				}
-				else {
-					print OUTFILE $key,"\t", $name,"\n";
-				}
-			}
-		}
+	if($comment){
+		print OUTFILE $comment;
+	}
+	if($members) {
+		print OUTFILE $type,"\t", $name, " = ", $members, "\n";
+	}
+	else {
+		print OUTFILE $type,"\t", $name,"\n";
 	}
 }
 
@@ -85,30 +80,10 @@ sub store_file {
 	open(OUTFILE,">$filename.YaST2.new") 
 		or return y2error("Could not open file $filename.YaST2.new for writing: %1", $!), 0;
 	
-	#Store Host Aliases first and delete old stuff
-	store_key("Host_Alias");
-	delete($data{"Host_Alias"});
-	
-	#Store User Aliases next
-	store_key("User_Alias");
-	delete($data{"User_Alias"});
-
-	#Store Command Aliases next
-	store_key("Cmnd_Alias");
-	delete($data{"Cmnd_Alias"});
-
-	#Defaults next
-	store_key("Defaults");
-	delete($data{"Defaults"});
-
-	#Runas Aliases then
-	store_key("Runas_Alias");
-	delete($data{"Runas_Alias"});
-
 	#Dump the rest
-	foreach my $key (keys %data) {
-		store_key($key);
-		delete($data{$key});
+	foreach my $line (@data2) {
+		store_line($line);
+		#delete($data{$key});
 	}
 
 	close(OUTFILE);
@@ -136,35 +111,14 @@ parse_file();
 while ( <STDIN> ) {
 	my ($command, $path, $argument) = ycp::ParseCommand ($_);
 
-	if ($command eq "Dir") {
-		if ($path eq ".") {
-			my @keys = keys %data;
-			ycp::Return(\@keys);
-		}
-		else {
-			ycp::Return([]);
-		}
-	}
-
-	elsif($command eq "Read") {
-		#Remove leading '.'
-		#$path =~ s/\.//; 
-		my @p = ycp::PathComponents(\$path);
-
-		if (exists($data{$p[0]})) {
-			ycp::Return(\@{$data{$p[0]} });
-		}
-		else {
-			y2error("Unrecognized key '$p[0]'");
-			ycp::Return(undef);
-		}
+	if($command eq "Read") {
+		ycp::Return(\@data2);
 	}
 
 	elsif($command eq "Write") {
 		my $result = "true";
-		if ($path eq "." && ref($argument) eq "HASH") {
-			%data = %{$argument};
-			
+		if ($path eq "." && ref($argument) eq "ARRAY") {
+			@data2 = @{$argument};
 		}
 		elsif ($path eq "." && !defined($argument)) {
 			$result = store_file() ? "true" : "false";
@@ -188,4 +142,4 @@ while ( <STDIN> ) {
 }
 
 #Debug only !
-#print STDERR Dumper(\%data);
+#print STDERR Dumper(\@data2);

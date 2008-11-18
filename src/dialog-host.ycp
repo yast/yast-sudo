@@ -27,13 +27,18 @@ any RedrawHostAlias(string name, list <string> members) {
 
 any AddEditHostAliasDialog (string what) {
 	string caption = "";
+	list < map <string, any> > ha = Sudo::GetHostAliases2();
+        map <string, any> it = ha [ Sudo::GetItem() ]:$[];
+
 	list <string> alias_members = [];
+	string name = "";
 	list <term> items = [];
 
 	if (what == "Add") {
 		caption = _("New Host Alias");
 	} else if (what == "Edit") {
-		alias_members = Sudo::GetHostAliasMembers(current_alias_name);
+		alias_members = (list <string>) it["mem"]:[];
+	        name = (string) it["name"]:"";
 		caption = _("Existing Host Alias");
 	}
 
@@ -51,7 +56,7 @@ any AddEditHostAliasDialog (string what) {
 	Wizard::SetContentsButtons(caption, contents, HELPS["host_alias"]:"",Label::BackButton(), Label::OKButton());
 	UI::ChangeWidget (`id("host_alias_name"), `ValidChars, "_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-	RedrawHostAlias(current_alias_name, alias_members);
+	RedrawHostAlias( name, alias_members );
 
 	any ret = nil;
 	while(true) {
@@ -59,45 +64,51 @@ any AddEditHostAliasDialog (string what) {
 	    ret  = UI::UserInput();
 	    /* abort? */
 	    if(ret == `abort) {
-	        if(Sudo::Abort()) break;
-	        else continue;
+	        if(Sudo::Abort()) 
+		    break;
+	        else
+		    continue;
 	    /* next */
 	    } else if(ret == `next) {
-			string new_alias = toupper((string) UI::QueryWidget(`id("host_alias_name"),`Value));
-			if (new_alias == "") {
-				Popup::Error(_("Alias name must not be empty."));
-				UI::SetFocus(`id("host_alias_name"));
-				continue;
-			}
-			if (current_alias_name != new_alias) {
-				if (Sudo::SearchHostAlias(new_alias)) {
-					Popup::Error(sformat(_("Alias with name %1 already exists"),new_alias));
-					UI::SetFocus(`id("host_alias_name"));
-					continue;
-				}
-				Sudo::RemoveHostAlias(current_alias_name);
-			}
-			if (alias_members == []) {
-				Popup::Error(_("Alias must have at least one member."));
-				UI::SetFocus(`id("host_alias_members"));
-				continue;
-			}
+		string new_alias = toupper((string) UI::QueryWidget(`id("host_alias_name"),`Value));
 
-			Sudo::SetHostAliasMembers(new_alias,alias_members);
-			Sudo::SetModified();
-			break;
+		if (new_alias == "") {
+		    Popup::Error(_("Alias name must not be empty."));
+		    UI::SetFocus(`id("host_alias_name"));
+		    continue;
+		}
+		if (name != new_alias) {
+		    if (Sudo::SearchAlias2(new_alias, Sudo::GetHostAliases2())) {
+			Popup::Error(sformat(_("Alias with name %1 already exists"),new_alias));
+			UI::SetFocus(`id("host_alias_name"));
+			continue;
+		    }
 
-		/* back */
+		    //Sudo::RemoveHostAlias(current_alias_name);
+		}
+		if (alias_members == []) {
+		    Popup::Error(_("Alias must have at least one member."));
+		    UI::SetFocus(`id("host_alias_members"));
+		    continue;
+		}
+
+		it["name"] = new_alias;
+		it["mem"] = alias_members;
+		Sudo::SetHostAlias(Sudo::GetItem(),it);
+		Sudo::SetModified();
+		break;
+
+	    /* back */
 	    }else if(ret == `back) {
 	        break;
 	    /* unknown */
-		}else if(ret == "add_host"){
-			string new_member = AddHostDialog(""); 
+	    }else if(ret == "add_host"){
+		string new_member = AddHostDialog(""); 
 
-			if(new_member != "") {
-				alias_members = add(alias_members, new_member);
-				RedrawHostAlias("",alias_members);
-			}
+		if(new_member != "") {
+			alias_members = add(alias_members, new_member);
+			RedrawHostAlias("",alias_members);
+		}
 		/* edit hosts*/
 		} else if (ret == "edit_host") {
 			string current_item = (string) UI::QueryWidget(`id("host_alias_members"), `CurrentItem);

@@ -29,17 +29,22 @@ any RedrawUserAlias(string name, list <string> members, list <string> users) {
 
 any AddEditUserAliasDialog (string what) {
 	string caption = "";
+	list < map <string, any> > ua = Sudo::GetUserAliases2();
+	map <string, any> it = ua [ Sudo::GetItem() ]: $[];
+
 	list <string> alias_members = [];
+	string name = "";
 	list <term> items = [];
 	list <string> users = (list <string>) merge(Sudo::all_users, Sudo::GetAliasNames("user"));
 
 	if (what == "Add") {
 		caption = _("New User Alias");
 	} else if (what == "Edit") {
-		alias_members = Sudo::GetUserAliasMembers(current_alias_name);
+		alias_members = (list <string>) it["mem"]:[];
 		foreach(string member, alias_members, {
 			users = filter(string user, users, ``(user != member));
 		});
+		name = (string) it["name"]:"";
 		caption = _("Existing User Alias");
 	}
 
@@ -69,7 +74,7 @@ any AddEditUserAliasDialog (string what) {
 	Wizard::SetContentsButtons(caption, contents,HELPS["user_alias"]:"",Label::BackButton(), Label::OKButton());
 	UI::ChangeWidget (`id("user_alias_name"), `ValidChars, "_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-	RedrawUserAlias(current_alias_name, alias_members,users);
+	RedrawUserAlias(name, alias_members,users);
 
 	any ret = nil;
 	while(true) {
@@ -80,35 +85,36 @@ any AddEditUserAliasDialog (string what) {
 	        if(Sudo::Abort()) break;
 	        else continue;
 	    /* next */
-		}else if(ret == `next) {
-			string new_alias = toupper ((string) UI::QueryWidget(`id("user_alias_name"),`Value));
-			if (new_alias == "") {
-				Popup::Error(_("Alias name must not be empty."));
-				UI::SetFocus(`id("user_alias_name"));
-				continue;
-			}
-			if (current_alias_name != new_alias) {
-				if (Sudo::SearchUserAlias(new_alias) ) {
-					Popup::Error(sformat(_("Alias with name %1 already exists"),new_alias));
-					UI::SetFocus(`id("user_alias_name"));
-					continue;
-				}
-				Sudo::RemoveUserAlias(current_alias_name);
-			}
-			if (alias_members == []) {
-				Popup::Error(_("Alias must have at least one member."));
-				UI::SetFocus(`id("user_alias_members"));
-				continue;
-			}
+	    }else if(ret == `next) {
+		string new_alias = toupper ((string) UI::QueryWidget(`id("user_alias_name"),`Value));
+		if (new_alias == "") {
+		    Popup::Error(_("Alias name must not be empty."));
+		    UI::SetFocus(`id("user_alias_name"));
+		    continue;
+		}
+		if (name != new_alias) {
+		    if (Sudo::SearchAlias2( new_alias, Sudo::GetUserAliases2() ) ) {
+		       Popup::Error(sformat(_("Alias with name %1 already exists"),new_alias));
+		       UI::SetFocus(`id("user_alias_name"));
+		       continue;
+		    }
+		}
+		if (alias_members == []) {
+		    Popup::Error(_("Alias must have at least one member."));
+		    UI::SetFocus(`id("user_alias_members"));
+		    continue;
+		}
 
-			Sudo::SetUserAliasMembers(new_alias,alias_members);
-			Sudo::SetModified();
-			break;
+		it["name"] = new_alias;
+		it["mem"] = alias_members;
+		Sudo::SetUserAlias( Sudo::GetItem(), it);
+		Sudo::SetModified();
+		break;
 		/* back */
 	     }else if(ret == `back) {
 	        break;
 		/* add users*/
-		}else if(ret == "add_member"){
+	     }else if(ret == "add_member"){
 			string new_member = (string) UI::QueryWidget(`id("all_users"),`Value);
 
 			alias_members = add(alias_members, new_member);

@@ -117,7 +117,7 @@ string AddHostDialog(string host)  {
 }
 
 boolean ValidateCommand(string cmd){
-	if(FileUtils::Exists(cmd) || haskey(Sudo::GetCmndAliases(), cmd) || cmd == "ALL" )
+	if(FileUtils::Exists(cmd) || contains(Sudo::GetAliasNames("command"), cmd) || cmd == "ALL" )
 		return true;
 	else {
 	    Popup::Error(sformat(_("File, directory or command alias '%1' does not exist."), cmd));

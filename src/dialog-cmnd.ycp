@@ -23,14 +23,19 @@ any RedrawCmndAlias(string name, list <string> members) {
 
 any AddEditCmndAliasDialog (string what) {
 	string caption = "";
+	list < map <string, any> > ca = Sudo::GetCmndAliases2();
+	map <string, any> it = ca [ Sudo::GetItem()]:$[];
+
 	list <string> alias_members = [];
+	string name = "";
 	list <term> items = [];
 
 	if (what == "Add") {
-		caption = _("New Command Alias");
+	    caption = _("New Command Alias");
 	} else if (what == "Edit") {
-		alias_members = Sudo::GetCmndAliasMembers(current_alias_name);
-		caption = _("Existing Command Alias");
+	    alias_members = it["mem"]:[];
+	    name = it["name"]:"";
+	    caption = _("Existing Command Alias");
 	}
 
 	term contents = `VBox (
@@ -51,7 +56,7 @@ any AddEditCmndAliasDialog (string what) {
 	Wizard::SetContentsButtons(caption, contents,HELPS["command_alias"]:"",Label::BackButton(), Label::OKButton());
 	UI::ChangeWidget (`id("cmnd_alias_name"), `ValidChars, "_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-	RedrawCmndAlias(current_alias_name, alias_members);
+	RedrawCmndAlias(name, alias_members);
 
 	any ret = nil;
 	while(true) {
@@ -63,29 +68,30 @@ any AddEditCmndAliasDialog (string what) {
 	        else continue;
 	    /* next */
 	    } else if(ret == `next) {
-			string new_alias = toupper ((string) UI::QueryWidget(`id("cmnd_alias_name"),`Value));
-			if (new_alias == "") {
-				Popup::Error(_("Alias name must not be empty."));
-				UI::SetFocus(`id("cmnd_alias_name"));
-				continue;
-			}
-			if (current_alias_name != new_alias) {
-				if (Sudo::SearchCmndAlias(new_alias) ) {
-					Popup::Error(sformat(_("Alias with name %1 already exists"),new_alias));
-					UI::SetFocus(`id("cmnd_alias_name"));
-					continue;
-				}
-				Sudo::RemoveCmndAlias(current_alias_name);
-			}
-			if (alias_members == []) {
-				Popup::Error(_("Alias must have at least one member."));
-				UI::SetFocus(`id("cmnd_alias_members"));
-				continue;
-			}
+		string new_alias = toupper ((string) UI::QueryWidget(`id("cmnd_alias_name"),`Value));
+		if (new_alias == "") {
+		    Popup::Error(_("Alias name must not be empty."));
+		    UI::SetFocus(`id("cmnd_alias_name"));
+		    continue;
+		}
+		if (name != new_alias) {
+		    if (Sudo::SearchAlias2( name, Sudo::GetCmndAliases2()) ) {
+			Popup::Error(sformat(_("Alias with name %1 already exists"),new_alias));
+			UI::SetFocus(`id("cmnd_alias_name"));
+			continue;
+		    }
+		}
+		if (alias_members == []) {
+		    Popup::Error(_("Alias must have at least one member."));
+		    UI::SetFocus(`id("cmnd_alias_members"));
+		    continue;
+		}
 
-			Sudo::SetCmndAliasMembers(new_alias,alias_members);
-			Sudo::SetModified();
-			break;
+		it["name"] = new_alias;
+		it["mem"] = alias_members;
+		Sudo::SetCmndAlias( Sudo::GetItem(),it);
+		Sudo::SetModified();
+		break;
 
 		/* back */
 	    }else if(ret == `back) {

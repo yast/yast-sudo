@@ -8,18 +8,21 @@
  * Authors:
  *   Bubli <kmachalkova@suse.cz>
  * Example:
- *   Dir(.sudo)
- *	(["User_Alias","Runas_Alias","Host_Alias","ALL", "%wheel"] )
  *
- *   Read(.sudo.User_Alias)
- *   (["WEBMASTERS = will, wendy, wim"])
- *
- *   Write(.sudo.Host_Alias, "SERVERS = master, mail, www, ns")
+ *   Read(.sudo)
+ *   ([
+ *     ["#We let root and any user in group wheel run any command on any host as any user.\n", "root", "ALL", "(ALL) ALL"],
+ *     ["", "%wheel", "ALL", "(ALL) ALL"]
+ *     ]
+ *    )
+ *   Write(.sudo, [ ["#first rule", "user", "HOST", "rule1"], ["#second rule", "otheruser", "HOST", "rule2"] ])
  *   (true)
  *
  * $Id: sudo.scr 11113 2005-10-20 14:15:16Z kmachalkova $
  *
- * Fore more information about possible keys and values
+ * Read returns and Write accepts list of lists of strings, ordered as follows: 
+ # ["comment to this rule or alias", username | keyword, hostname | alias name, rule | csv list ]
+ * Fore more information about possible keywords, aliases and values
  * consult with the sudoers man pages `man sudoers`.
  */
 

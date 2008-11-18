@@ -51,7 +51,7 @@ import "UsersCache";
  */
 boolean modified = false;
 
-integer sl = 500;
+integer sl = 10;
 /**
  * Data was modified?
  * @return true if modified
@@ -66,99 +66,99 @@ global void SetModified() {
 
 global string ValidCharsUsername = deletechars (String::CGraph (), "'\"") + " ";
 
-map <string, list < list <string> > > settings = $[];
+list < list <string> >  settings2 = [];
 map <string, list<string> > host_aliases = $[];
+list< map <string, any> > host_aliases2 = [];
 map <string, list<string> > user_aliases = $[];
+list< map <string, any> > user_aliases2 = [];
 map <string, list<string> > cmnd_aliases = $[];
+list< map <string, any> > cmnd_aliases2 = [];
 map <string, list<string> > runas_aliases = $[];
+list< map <string, any> > runas_aliases2 = [];
 list <list <string> > defaults = [];
 list < map <string, any> > user_specs = [];
+list < map <string, any> > rules = [];
 list <string> deleted_specs = [];
 global list <string> all_users = [];
 
-boolean ReadSudoSettings() {
-	list <string> keys = SCR::Dir(.sudo);
+boolean ReadSudoSettings2() {
+	settings2 = ( list < list <string> >)SCR::Read(.sudo);
+	y2milestone("Sudo settings %1", settings2);
 
-	if (keys != [])
-		foreach (string key, keys, {
-		list < list <string> > val = (list < list <string> >) SCR::Read(add(.sudo, key));
-			if (val != nil) settings[key] = val;
-     });
+	foreach( list <string> line, settings2, {
+	    string type = line[1]:"";
 
-	y2milestone("settings %1", settings);
+	    switch (type) {
+		case "Host_Alias": {
+		    list <string> lst = splitstring(deletechars( line[3]:""," \t"), ",");
+		    host_aliases2 = add( host_aliases2, $[ "c": line[0]: "", "name": line[2]:"", "mem": lst ] );
+		    break;
+		}
+		case "User_Alias": {
+		    list <string> lst = splitstring(deletechars( line[3]:""," \t"), ",");
+		    user_aliases2 = add( user_aliases2, $[ "c": line[0]: "", "name": line[2]:"", "mem": lst ] );
+		    break;
+		}
+		case "Cmnd_Alias": {
+		    list <string> lst = maplist(string s, splitstring( line[3]:"", ","), {
+		        return (substring(s,findfirstnotof(s," \t")));
+		    });
+		    cmnd_aliases2 = add( cmnd_aliases2, $[ "c": line[0]: "", "name": line[2]:"", "mem": lst ] );
+		    break;
+		}
+		case "Runas_Alias": {
+		    list <string> lst = splitstring(deletechars( line[3]:""," \t"), ",");
+		    runas_aliases2 = add( runas_aliases2, $[ "c": line[0]: "", "name": line[2]:"", "mem": lst ] );
+		    break;
+		}
+		case "Defaults": {
+		    //do nothing, keep defaults untouched
+		    defaults = add(defaults,line);
+		    break;
+		}
+		//rules remained
+		default: {
+			map <string, any> m = $[];
+			list <string> cmd = [];
 
-	foreach(string opt_key, list < list <string> > opt_val, settings, {
-		// #comment \n key value = porn.bat 
-		// is returned as key : [["#comment","value","porn.bat"]]
-		// wrk[0] -> comment, wrk[1] -> value, wrk[2] -> porn.bat
-		foreach(list <string> wrk, opt_val, {
-			switch (opt_key) {
-				case "Host_Alias": {
-					host_aliases[ wrk[1]:"" ] = splitstring(deletechars(wrk[2]:""," \t"), ",");
-					break;
-				}
-				case "User_Alias": {
-					user_aliases[ wrk[1]:"" ] = splitstring(deletechars(wrk[2]:""," \t"), ",");
-					break;
-				}
-				case "Cmnd_Alias": {
-					cmnd_aliases[ wrk[1]:""] = maplist(string s, splitstring( wrk[2]:"", ","), {
-						return (substring(s,findfirstnotof(s," \t")));
-					});
-					break;
-				}
-				case "Runas_Alias": {
-					runas_aliases[ wrk[1]:"" ] = splitstring(deletechars(wrk[2]:""," \t"), ",");
-					break;
-				}
-				case "Defaults": {
-					//do nothing, keep defaults untouched
-					defaults = add(defaults,wrk);
-					break;
-				}
-				//User specifications remained
-				default: {
-					map <string, any> m = $[];
-					list <string> cmd = [];
+		        if ( regexpmatch(type, "^.*\\\\.*$"))
+		           type = regexpsub(type, "^(.*)\\\\(.*)$", "\\1\\2");
+			m["user"] = type;
 
-				        if ( regexpmatch(opt_key, "^.*\\\\.*$"))
-				           opt_key = regexpsub(opt_key, "^(.*)\\\\(.*)$", "\\1\\2");
-					m["user"] = opt_key;
+			m["host"] = line[2]:"";
 
-					m["host"] = wrk[1]:"";
-
-					//match "(.*)"
-					if (regexpmatch(wrk[2]:"","\\(.*\\)")){
-					     m["run_as"] = regexpsub(wrk[2]:"","(\\(.*\\))", "\\1");
-					}
-
-					if(issubstring(wrk[2]:"","NOPASSWD:")) {
-						m["no_passwd"] = (boolean) true;
-					}
-					else {
-					     m["no_passwd"] = (boolean) false;
-					}
-
-					cmd = splitstring(wrk[2]:"","):");
-					m["commands"] = (list <string>) splitstring (cmd[ size(cmd) -1 ]:"",",");
-					m["commands"] = maplist(string s, m["commands"]:[],{
-						return (substring(s,findfirstnotof(s," \t")));
-					});
-					m["comment"] = wrk[0]:"";
-
-					user_specs = add(user_specs,m);
-					break;
-				}
+			//match "(.*)"
+			if (regexpmatch(line[3]:"","\\(.*\\)")){
+			     m["run_as"] = regexpsub(line[3]:"","(\\(.*\\))", "\\1");
 			}
-		});
+
+			if(issubstring(line[3]:"","NOPASSWD:")) {
+				m["no_passwd"] = (boolean) true;
+			}
+			else {
+			     m["no_passwd"] = (boolean) false;
+			}
+
+			cmd = splitstring(line[3]:"","):");
+			m["commands"] = (list <string>) splitstring (cmd[ size(cmd) -1 ]:"",",");
+			m["commands"] = maplist(string s, m["commands"]:[],{
+				return (substring(s,findfirstnotof(s," \t")));
+			});
+			m["comment"] = line[0]:"";
+
+			rules = add(rules,m);
+			break;
+	
+			}
+		}
 	});
 
-	settings = filter(string k, list <list <string> > v, settings,{
-		return (regexpmatch(k,".*_Alias"));
-	});
+	y2milestone("user %1 host %2 runas %3 cmnd %4 def %5 rules %6", user_aliases2, host_aliases2, runas_aliases2, cmnd_aliases2, defaults, rules);
+
 
 	return true;
 }
+
 
 global boolean ReadLocalUsers() {
 	boolean current_progress = Progress::set(false);
@@ -192,137 +192,79 @@ global boolean ReadLocalUsers() {
 	else return true;
 }
 
-boolean WriteSudoSettings() {
-	if (GetModified())
-	{
-	//Host aliases
-	 settings["Host_Alias"] = maplist (list <string> s, settings["Host_Alias"]:[],{
-		if (haskey(host_aliases,s[1]:"")) {
-			s[2] = mergestring(host_aliases[s[1]:""]:[],",");
-			host_aliases = remove(host_aliases,s[1]:"");
-		}
-		else {
-			s[1] = "";
-			s[2] = "";
-		}
-		return s;
-	});
+global boolean WriteSudoSettings2()
+{
+    list <list <string> > set = [];
 
-	foreach(string opt_key, list<string> opt_val, host_aliases, {
-		settings["Host_Alias"] = add(settings["Host_Alias"]:[], ["", opt_key, mergestring(opt_val,",")]);
-	});
+    foreach(map <string, any> a, host_aliases2,{
+	list <string> line = [ a["c"]:"", "Host_Alias", a["name"]:"", mergestring(a["mem"]:[],",") ];
+	set = add(set, line);
+    });
+    foreach(map <string, any> a, user_aliases2,{
+	list <string> line = [ a["c"]:"", "User_Alias", a["name"]:"", mergestring(a["mem"]:[],",")];
+	set = add(set, line);
+    });
+    foreach(map <string, any> a, cmnd_aliases2,{
+	list <string> line = [ a["c"]:"", "Cmnd_Alias", a["name"]:"", mergestring(a["mem"]:[],",")];
+	set = add(set, line);
+    });
+    set = ( list < list <string> > ) merge(set, defaults);
+    foreach(map <string, any> a, runas_aliases2,{
+	list <string> line = [ a["c"]:"", "Runas_Alias", a["name"]:"", mergestring(a["mem"]:[],",")];
+	set = add(set, line);
+    });
 
-	//User aliases
-	settings["User_Alias"] = maplist (list <string> s, settings["User_Alias"]:[],{
-		if (haskey(user_aliases,s[1]:"")) {
-			s[2] = mergestring(user_aliases[s[1]:""]:[],",");
-			user_aliases = remove(user_aliases,s[1]:"");
-		}
-		else {
-			s[1] = "";
-			s[2] = "";
-		}
-		return s;
-	});
+    foreach(map <string, any> m, rules,{
+	string user = (string) m["user"]:"";
 
-	foreach(string opt_key, list<string> opt_val, user_aliases, {
-		settings["User_Alias"] = add(settings["User_Alias"]:[], ["", opt_key, mergestring(opt_val,",")]);
-	});
+        user = mergestring (splitstring(user, "\\"), "\\\\");
+	string host = (string) m["host"]:"";
+	string comment = (string) m["comment"]:"";
+	string rest = (string) m["run_as"]:"" + " " + (( (boolean) m["no_passwd"]:false) ? "NOPASSWD: " : "") + mergestring((list <string>)m["commands"]:[],",");
 
-	//Runas aliases
-	settings["Runas_Alias"] = maplist (list <string> s, settings["Runas_Alias"]:[],{
-		if (haskey(runas_aliases,s[1]:"")) {
-			s[2] = mergestring(runas_aliases[s[1]:""]:[],",");
-			runas_aliases = remove(runas_aliases,s[1]:"");
-		}
-		else {
-			s[1] = "";
-			s[2] = "";
-		}
-		return s;
-	});
+	set = add(set,[comment, user, host, rest]);
+    });
 
-	foreach(string opt_key, list<string> opt_val, runas_aliases, {
-		settings["Runas_Alias"] = add(settings["Runas_Alias"]:[], ["", opt_key, mergestring(opt_val,",")]);
-	});
+    y2milestone("Sudo settings %1", set);
 
-	//Command Aliases
-	settings["Cmnd_Alias"] = maplist (list <string> s, settings["Cmnd_Alias"]:[],{
-		if (haskey(cmnd_aliases,s[1]:"")) {
-			s[2] = mergestring(cmnd_aliases[s[1]:""]:[],",");
-			cmnd_aliases = remove(cmnd_aliases,s[1]:"");
-		}
-		else {
-			s[1] = "";
-			s[2] = "";
-		}
-		return s;
-	});
-
-	foreach(string opt_key, list<string> opt_val, cmnd_aliases, {
-		settings["Cmnd_Alias"] = add(settings["Cmnd_Alias"]:[], ["", opt_key, mergestring(opt_val,",")]);
-	});
-
-	//Restore defaults
-	settings["Defaults"] = defaults;
-
-	//Rest
-	foreach(map <string, any> m, user_specs,{
-		string user = (string) m["user"]:"";
-
-                user = mergestring (splitstring(user, "\\"), "\\\\");
-		string host = (string) m["host"]:"";
-		string comment = (string) m["comment"]:"";
-		string rest = (string) m["run_as"]:"" + " " + (( (boolean) m["no_passwd"]:false) ? "NOPASSWD: " : "") + mergestring((list <string>)m["commands"]:[],",");
-
-		if( !contains(settings[user]:[], [comment, host, rest]) )
-			settings[user] = add(settings[user]:[],[comment, host, rest]);
-	});
-
-	foreach(string key, list <list <string> > value, settings, {
-		if ( deleted_specs != [] && contains(deleted_specs, key)){
-			settings = remove(settings, key);
-		}
-	});
-
-	y2milestone("Writing sudo settings %1", settings);
-
-	if (SCR::Write(.sudo, settings))
-		return SCR::Write(.sudo, nil);
-	else return false;
-	}
-	return true;
+    if (SCR::Write(.sudo, set))
+	return SCR::Write(.sudo, nil);
+    return true;
 }
 
-global list <map <string, any> > GetUserSpecs(){
-	return user_specs;
+integer citem = -1;
+
+global void SetItem( integer i )
+{
+    y2internal("Current item %1", i);
+    citem = i;
 }
 
-global void RemoveUserSpec(integer i) {
-	map <string, any> m = user_specs[i]: $[];
-	string key = m["user"]:"";
-	y2milestone("Deleting %1 from user specifications", key);
-
-	deleted_specs = add(deleted_specs, key);
-	user_specs = remove(user_specs,i);
+global integer GetItem()
+{
+    return citem;
 }
 
-global map <string, any> GetUserSpecMember(integer i) {
-	return user_specs[i]:$[];
+global list <map <string, any> > GetRules(){
+	return rules;
 }
 
-global void SetUserSpecMember(integer i, map <string,any> spec) {
-	user_specs[i] = spec;
+global void RemoveRule( integer i ) {
+	rules = remove( rules, i);
 }
 
-global integer GetUserSpecSize(){
-	return (size(user_specs));
+global map <string, any> GetRule(integer i) {
+	return rules[i]:$[];
 }
 
-global boolean SearchUserSpec(string what, string key) {
+global void SetRule(integer i, map <string,any> spec) {
+	rules[i] = spec;
+}
+
+global boolean SearchRules(string what, string key) {
 	boolean found = false;
 
-	foreach (map <string, any> m, user_specs, {
+	foreach (map <string, any> m, rules, {
 		if (haskey(m, what)) {
 			if (what == "commands") {
 				if (contains(m[what]:[], key)){
@@ -362,100 +304,100 @@ global boolean SystemRulePopup(map <string, any> m, boolean delete) {
 
 
 global list <string> GetAliasNames (string what) {
+	list <string> ret = [];
 	switch(what) {
-		case ("user"): return (maplist (string key, list <string> val, user_aliases,{ return key; }));
-		case ("run_as"): return (maplist (string key, list <string> val, runas_aliases,{ return key; }));
-		case ("host"): return (maplist (string key, list <string> val, host_aliases,{ return key; }));
-		case ("command"): return (maplist (string key, list <string> val, cmnd_aliases,{ return key; }));
+		case ("user"): 
+			ret = maplist ( map <string, any> m, user_aliases2,
+			        { return  m["name"]:""; 
+			    });
+			break;
+		case ("run_as"): 
+			ret = maplist ( map <string, any> m, runas_aliases2,
+			        { return  m["name"]:""; 
+			    });
+			break;
+		case ("host"): 
+			ret = maplist ( map <string, any> m, host_aliases2,
+			        { return  m["name"]:""; 
+			    });
+			break;
+		case ("command"):
+			ret = maplist ( map <string, any> m, cmnd_aliases2,
+			        { return  m["name"]:""; 
+			    });
+			break;
 		default: return [];
 	}
+	return ret;
 }
+
+global boolean SearchAlias2(string name, list < map <string, any> > aliases ) {
+    list < map <string, any> > tmp  = [];
+    tmp = filter( map <string, any> m, aliases, {
+	return (m["name"]:"" == name);
+    });
+
+   return ( size(tmp) > 0 );
+}
+
 
 /* Users */
-global map <string, list<string> > GetUserAliases() {
-	return user_aliases;
+global list < map <string, any> > GetUserAliases2() {
+    return user_aliases2;
 }
 
-global void RemoveUserAlias(string name) {
-	user_aliases = filter(string k, list<string> val, user_aliases, ``(k != name ));
+global void SetUserAlias(integer i, map <string,any> alias ) {
+	user_aliases2[i] = alias;
 }
 
-global list <string> GetUserAliasMembers(string name) {
-	return user_aliases[name]:[];
+global void RemoveUserAlias2( integer i) {
+	user_aliases2 = remove(user_aliases2, i);
 }
 
-global boolean SearchUserAlias(string name) {
-	return( haskey(user_aliases,name));
-}
 /* end Users */
 
 /* Hosts */
-global void SetUserAliasMembers (string name, list <string> members) {
-	user_aliases[name] = members;
+global list < map <string, any> > GetHostAliases2() {
+    return host_aliases2;
 }
 
-global map <string, list<string> > GetHostAliases() {
-	return host_aliases;
+global void RemoveHostAlias2( integer i) {
+	host_aliases2 = remove(host_aliases2, i);
 }
 
-global void RemoveHostAlias(string name) {
-	host_aliases = filter(string k, list<string> val, host_aliases, ``(k != name ));
-}
-
-global list <string> GetHostAliasMembers(string name) {
-	return host_aliases[name]:[];
-}
-
-global void SetHostAliasMembers (string name, list <string> members) {
-	host_aliases[name] = members;
-}
-
-global boolean SearchHostAlias(string name) {
-	return( haskey(host_aliases,name));
+global void SetHostAlias(integer i, map <string,any> alias) {
+	host_aliases2[i] = alias;
 }
 /* end Hosts */
 
 /* RunAs */
-global map <string, list<string> > GetRunAsAliases() {
-	return runas_aliases;
+global list < map <string, any> > GetRunAsAliases2() {
+	return runas_aliases2;
 }
 
-global void RemoveRunAsAlias(string name) {
-	runas_aliases = filter(string k, list<string> val, runas_aliases, ``(k != name ));
+global void RemoveRunAsAlias2( integer i) {
+	runas_aliases2 = remove(runas_aliases2, i);
 }
 
-global list <string> GetRunAsAliasMembers(string name) {
-	return runas_aliases[name]:[];
+global void SetRunAsAlias(integer i, map <string,any> alias) {
+	runas_aliases2[i] = alias;
 }
 
-global void SetRunAsAliasMembers (string name, list <string> members) {
-	runas_aliases[name] = members;
-}
-
-global boolean SearchRunAsAlias(string name) {
-	return( haskey(runas_aliases,name));
-}
 /* end RunAs */
+
 /* Commands */
-global map <string, list<string> > GetCmndAliases() {
-	return cmnd_aliases;
+global list < map <string, any> > GetCmndAliases2() {
+	return cmnd_aliases2;
 }
 
-global void RemoveCmndAlias(string name) {
-	cmnd_aliases = filter(string k, list<string> val, cmnd_aliases, ``(k != name ));
+global void SetCmndAlias(integer i, map <string,any> alias) {
+	cmnd_aliases2[i] = alias;
 }
 
-global list <string> GetCmndAliasMembers(string name) {
-	return cmnd_aliases[name]:[];
+global void RemoveCmndAlias2( integer i) {
+	cmnd_aliases2 = remove(cmnd_aliases2, i);
 }
 
-global void SetCmndAliasMembers(string name, list <string> members) {
-	cmnd_aliases[name] = members;
-}
-
-global boolean SearchCmndAlias(string name) {
-	return( haskey(cmnd_aliases,name));
-}
 /*end Commands */
 
 global boolean Abort() {
@@ -507,7 +449,7 @@ global boolean Read() {
     if(PollAbort()) return false;
     Progress::NextStage();
     /* Error message */
-    if(!ReadSudoSettings()) Report::Error(Message::CannotReadCurrentSettings());
+    if(!ReadSudoSettings2()) Report::Error(Message::CannotReadCurrentSettings());
     sleep(sl);
 
     if(PollAbort()) return false;
@@ -558,7 +500,7 @@ global boolean Write() {
     if(PollAbort()) return false;
     Progress::NextStage();
     /* Error message */
-    if(!WriteSudoSettings()) {
+    if(!WriteSudoSettings2()) {
 	Report::Error (_("Cannot write settings."));
 	ret = false;
     }
