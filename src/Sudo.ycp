@@ -66,26 +66,20 @@ global void SetModified() {
 
 global string ValidCharsUsername = deletechars (String::CGraph (), "'\"") + " ";
 
-list < list <string> >  settings2 = [];
-map <string, list<string> > host_aliases = $[];
+list < list <any> >  settings2 = [];
 list< map <string, any> > host_aliases2 = [];
-map <string, list<string> > user_aliases = $[];
 list< map <string, any> > user_aliases2 = [];
-map <string, list<string> > cmnd_aliases = $[];
 list< map <string, any> > cmnd_aliases2 = [];
-map <string, list<string> > runas_aliases = $[];
 list< map <string, any> > runas_aliases2 = [];
-list <list <string> > defaults = [];
-list < map <string, any> > user_specs = [];
+list < list <any> > defaults = [];
 list < map <string, any> > rules = [];
-list <string> deleted_specs = [];
 global list <string> all_users = [];
 
 boolean ReadSudoSettings2() {
-	settings2 = ( list < list <string> >)SCR::Read(.sudo);
+	settings2 = ( list < list <any> >)SCR::Read(.sudo);
 	y2milestone("Sudo settings %1", settings2);
 
-	foreach( list <string> line, settings2, {
+	foreach( list line, settings2, {
 	    string type = line[1]:"";
 
 	    switch (type) {
@@ -111,13 +105,13 @@ boolean ReadSudoSettings2() {
 		    runas_aliases2 = add( runas_aliases2, $[ "c": line[0]: "", "name": line[2]:"", "mem": lst ] );
 		    break;
 		}
-		case "Defaults": {
-		    //do nothing, keep defaults untouched
-		    defaults = add(defaults,line);
-		    break;
-		}
-		//rules remained
+		//rules + defaults remained
 		default: {
+		    if ( regexpmatch(type, "^Defaults.*$") ) {
+		       //do nothing, keep defaults untouched
+		        defaults = add(defaults,line);
+		    }
+		    else {
 			map <string, any> m = $[];
 			list <string> cmd = [];
 
@@ -150,6 +144,7 @@ boolean ReadSudoSettings2() {
 			break;
 	
 			}
+		    }
 		}
 	});
 
@@ -194,7 +189,7 @@ global boolean ReadLocalUsers() {
 
 global boolean WriteSudoSettings2()
 {
-    list <list <string> > set = [];
+    list <list <any> > set = [];
 
     foreach(map <string, any> a, host_aliases2,{
 	list <string> line = [ a["c"]:"", "Host_Alias", a["name"]:"", mergestring(a["mem"]:[],",") ];
@@ -208,7 +203,7 @@ global boolean WriteSudoSettings2()
 	list <string> line = [ a["c"]:"", "Cmnd_Alias", a["name"]:"", mergestring(a["mem"]:[],",")];
 	set = add(set, line);
     });
-    set = ( list < list <string> > ) merge(set, defaults);
+    set = ( list < list <any> > ) merge(set, defaults);
     foreach(map <string, any> a, runas_aliases2,{
 	list <string> line = [ a["c"]:"", "Runas_Alias", a["name"]:"", mergestring(a["mem"]:[],",")];
 	set = add(set, line);
