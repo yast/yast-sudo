@@ -72,7 +72,8 @@ any AddEditRunAsAliasDialog (string what) {
 		)
 	);
 
-	Wizard::SetContentsButtons(caption, contents,HELPS["runas_alias"]:"",Label::BackButton(), Label::OKButton());
+	Wizard::SetContentsButtons(caption, contents,HELPS["runas_alias"]:"",Label::CancelButton(), Label::OKButton());
+	Wizard::HideAbortButton();
 	UI::ChangeWidget (`id("runas_alias_name"), `ValidChars, "_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
 	RedrawRunAsAlias(name, alias_members,users);

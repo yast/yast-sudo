@@ -53,7 +53,8 @@ any AddEditHostAliasDialog (string what) {
           ))
 	);
 
-	Wizard::SetContentsButtons(caption, contents, HELPS["host_alias"]:"",Label::BackButton(), Label::OKButton());
+	Wizard::SetContentsButtons(caption, contents, HELPS["host_alias"]:"",Label::CancelButton(), Label::OKButton());
+	Wizard::HideAbortButton();
 	UI::ChangeWidget (`id("host_alias_name"), `ValidChars, "_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
 	RedrawHostAlias( name, alias_members );

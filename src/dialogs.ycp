@@ -489,9 +489,9 @@ any RunSudoDialogs() {
 		"initial_screen" : initial_screen,
 		"screens" : tabs,
 		"widget_descr" : widgets_handling,
-		"back_button" : Label::BackButton(),
-		"abort_button" : Label::AbortButton(),
-		"next_button" : Label::FinishButton(),
+		"back_button" : nil, //Label::BackButton(),
+		"abort_button" : Label::CancelButton(),
+		"next_button" : Label::OKButton(),
 		"functions" : functions,
 	]);
 }

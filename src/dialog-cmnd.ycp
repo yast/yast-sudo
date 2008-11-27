@@ -53,7 +53,8 @@ any AddEditCmndAliasDialog (string what) {
           ))
 	);
 
-	Wizard::SetContentsButtons(caption, contents,HELPS["command_alias"]:"",Label::BackButton(), Label::OKButton());
+	Wizard::SetContentsButtons(caption, contents,HELPS["command_alias"]:"",Label::CancelButton(), Label::OKButton());
+	Wizard::HideAbortButton();
 	UI::ChangeWidget (`id("cmnd_alias_name"), `ValidChars, "_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
 	RedrawCmndAlias(name, alias_members);

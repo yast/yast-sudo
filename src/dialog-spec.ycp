@@ -64,7 +64,8 @@ any AddEditUserSpecDialog(string what) {
 
 	);
 
-	Wizard::SetContentsButtons(caption, contents,HELPS["spec_single"]:"",Label::BackButton(), Label::OKButton());
+	Wizard::SetContentsButtons(caption, contents,HELPS["spec_single"]:"",Label::CancelButton(), Label::OKButton());
+	Wizard::HideAbortButton(); 
 	UI::ChangeWidget(`id("user_name"),`ValidChars, Sudo::ValidCharsUsername);
 	UI::ChangeWidget(`id("run_as"),`ValidChars, Sudo::ValidCharsUsername);
 
