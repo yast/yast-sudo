@@ -71,7 +71,8 @@ any AddEditUserAliasDialog (string what) {
 		)
 	);
 
-	Wizard::SetContentsButtons(caption, contents,HELPS["user_alias"]:"",Label::BackButton(), Label::OKButton());
+	Wizard::SetContentsButtons(caption, contents,HELPS["user_alias"]:"",Label::CancelButton(), Label::OKButton());
+	Wizard::HideAbortButton();
 	UI::ChangeWidget (`id("user_alias_name"), `ValidChars, "_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
 	RedrawUserAlias(name, alias_members,users);
