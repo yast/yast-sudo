@@ -81,12 +81,8 @@ any AddEditUserSpecDialog(string what) {
 	while(true) {
 
 	    ret  = UI::UserInput();
-	    /* abort? */
-	    if(ret == `abort) {
-	        if(Sudo::Abort()) break;
-	        else continue;
 	    /* next */
-	    } else if(ret == `next) {
+	    if(ret == `next) {
 			spec["user"] = UI::QueryWidget(`id("user_name"),`Value);
 			spec["host"] = UI::QueryWidget(`id("host_name"),`Value);
 			spec["run_as"] = (string)UI::QueryWidget(`id("run_as"),`Value);
