@@ -82,12 +82,8 @@ any AddEditRunAsAliasDialog (string what) {
 	while(true) {
 
 	    ret  = UI::UserInput();
-	    /* abort? */
-	    if(ret == `abort) {
-	        if(Sudo::Abort()) break;
-	        else continue;
 	    /* next */
-	    }else if(ret == `next) {
+	    if(ret == `next) {
 		string new_alias = toupper((string) UI::QueryWidget(`id("runas_alias_name"),`Value));
 		if (new_alias == "") {
 		    Popup::Error(_("Alias name must not be empty."));
