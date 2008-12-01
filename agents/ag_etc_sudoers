@@ -32,21 +32,32 @@ sub parse_file {
 	}
 
 	my $comment = "";
+        my $line = "";
 	while (<INFILE>) {
 		chomp;
-		if (/^\s*$/ || /^#/) {
+                $line .= $_;
+		#a line is a comment
+		if ($line =~ m/^\s*$/ || $line =~ m/^#/) {
 			$comment .= "$_\n";
+                        $line = "";
 			next; 
 		}
+
+		#a line is \-terminated multiline rule/alias
+		#save it and continue on the next line
+                if ($line =~ m/^(.*)\\$/){
+                  $line = $1;
+                  next;
+                }
 
 	        my $alias       = "";
 
 		my @entry2 = ();
-		if (/^(\S+)\s+(\S+)\s*=\s*([^#]*)/) {
+		if ($line =~ m/^(\S+)\s+(\S+)\s*=\s*([^#]*)/) {
 			$alias =$1;
 			push(@entry2, $comment, $alias, $2, $3);
 		}	
-		elsif (/^(\S+)\s+(\S+)/) {
+		elsif ($line =~ m/^(\S+)\s+(\S+)/) {
 			$alias =$1;
 			push(@entry2, $comment, $alias, $2);
 		}
@@ -54,6 +65,7 @@ sub parse_file {
 		push (@data2, \@entry2);
 
 		$comment = "";
+                $line = "";
 	}
 
 	close (INFILE);
