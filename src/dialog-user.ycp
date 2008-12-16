@@ -57,7 +57,7 @@ any AddEditUserAliasDialog (string what) {
 				`Left(`ReplacePoint(`id("all_users_replace"),
 					`ComboBox(`id("all_users"),_("Local and System Users"), [])
 				)),
-				`Table(`id("user_alias_members"), `opt(`hstretch,`vstretch), `header("Alias Members"),[])
+				`Table(`id("user_alias_members"), `opt(`hstretch,`vstretch), `header(_("Alias Members")),[])
 			),
 			`HSquash(
 				`VBox (
