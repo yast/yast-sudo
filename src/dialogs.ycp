@@ -137,7 +137,9 @@ void InitUserSpecs (string key) {
 	    else
 		cmds = (ent["commands"]:[])[0]:"";
 
-	    items = add(items, `item(`id(idx), (string) ent["user"]:"", (string) ent["host"]:"", (string) ent["run_as"]:"",(ent["no_passwd"]:false)? _("Yes") : _("No"), cmds));
+	    items = add(items, `item(`id(idx), 
+			(string) ent["user"]:"", (string) ent["host"]:"", (string) ent["run_as"]:"",
+			(ent["tag"]:"" == "NOPASSWD:") ? _("Yes") : _("No"), cmds));
 		idx = idx + 1;
 	});
 
