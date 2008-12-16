@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Tue Dec 16 17:38:59 CET 2008 - kmachalkova@suse.cz
+
+- Missing strings marked for translation (bnc#448693, bnc#459376)
+- Consider all possible command tags (NOPASSWD, NOEXEC, SETENV) when
+  parsing a line from sudoers in order not to delete those tags that 
+  can't be set in UI
+- 2.17.3
+
+-------------------------------------------------------------------
 Mon Dec  1 13:11:02 CET 2008 - kmachalkova@suse.cz
 
 - Focusing correct item when changing priority of rules (bnc#449754)
