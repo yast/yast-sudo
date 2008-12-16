@@ -73,7 +73,7 @@ any AddEditUserSpecDialog(string what) {
 	UI::ChangeWidget(`id("user_name"),`Value, spec["user"]:"");
 	UI::ChangeWidget(`id("host_name"),`Value, spec["host"]:"");
 	UI::ChangeWidget(`id("run_as"),`Value, deletechars(spec["run_as"]:"","()"));
-	UI::ChangeWidget(`id("no_passwd"),`Value, spec["no_passwd"]:false);
+	UI::ChangeWidget(`id("no_passwd"),`Value, (spec["tag"]:"" == "NOPASSWD:"));
 	RedrawCmndTable(commands);
 
 
@@ -86,8 +86,14 @@ any AddEditUserSpecDialog(string what) {
 			spec["user"] = UI::QueryWidget(`id("user_name"),`Value);
 			spec["host"] = UI::QueryWidget(`id("host_name"),`Value);
 			spec["run_as"] = (string)UI::QueryWidget(`id("run_as"),`Value);
-			spec["no_passwd"] = UI::QueryWidget(`id("no_passwd"),`Value); 
 			spec["commands"] = commands;
+
+			if ( (boolean) UI::QueryWidget(`id("no_passwd"),`Value)) 
+			{ 
+			    spec["tag"] = "NOPASSWD:";
+			}
+			else
+			    spec["tag"] = "";
 
 			if (spec["user"]:"" == "") {
 				Popup::Error(_("User name must not be empty."));
