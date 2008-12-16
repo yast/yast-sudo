@@ -125,13 +125,16 @@ boolean ReadSudoSettings2() {
 			if (regexpmatch(line[3]:"","\\(.*\\)")){
 			     m["run_as"] = regexpsub(line[3]:"","(\\(.*\\))", "\\1");
 			}
+			if (regexpmatch(line[3]:"","NOPASSWD:|SETENV:|NOEXEC:")){
+			    m["tag"] = regexpsub(line[3]:"", "(NOPASSWD:|SETENV:|NOEXEC:)","\\1");
+			}
 
-			if(issubstring(line[3]:"","NOPASSWD:")) {
+			/*if(issubstring(line[3]:"","NOPASSWD:")) {
 				m["no_passwd"] = (boolean) true;
 			}
 			else {
 			     m["no_passwd"] = (boolean) false;
-			}
+			}*/
 
 			cmd = splitstring(line[3]:"","):");
 			m["commands"] = (list <string>) splitstring (cmd[ size(cmd) -1 ]:"",",");
@@ -203,7 +206,9 @@ global boolean WriteSudoSettings2()
 	list <string> line = [ a["c"]:"", "Cmnd_Alias", a["name"]:"", mergestring(a["mem"]:[],",")];
 	set = add(set, line);
     });
+
     set = ( list < list <any> > ) merge(set, defaults);
+
     foreach(map <string, any> a, runas_aliases2,{
 	list <string> line = [ a["c"]:"", "Runas_Alias", a["name"]:"", mergestring(a["mem"]:[],",")];
 	set = add(set, line);
@@ -215,7 +220,7 @@ global boolean WriteSudoSettings2()
         user = mergestring (splitstring(user, "\\"), "\\\\");
 	string host = (string) m["host"]:"";
 	string comment = (string) m["comment"]:"";
-	string rest = (string) m["run_as"]:"" + " " + (( (boolean) m["no_passwd"]:false) ? "NOPASSWD: " : "") + mergestring((list <string>)m["commands"]:[],",");
+	string rest = (string) m["run_as"]:"" + " " + (string) m["tag"]:"" + mergestring((list <string>)m["commands"]:[],",");
 
 	set = add(set,[comment, user, host, rest]);
     });
