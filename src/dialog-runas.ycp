@@ -58,7 +58,7 @@ any AddEditRunAsAliasDialog (string what) {
 				`Left(`ReplacePoint(`id("all_run_as_replace"),
 					`ComboBox(`id("all_run_as"),_("Local and System Users"), [])
 				)),
-				`Table(`id("runas_alias_members"), `opt(`hstretch,`vstretch), `header("Alias Members"),[])
+				`Table(`id("runas_alias_members"), `opt(`hstretch,`vstretch), `header(_("Alias Members")),[])
 			),
 			`HSquash(
 				`VBox (
