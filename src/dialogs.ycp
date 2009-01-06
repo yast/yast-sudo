@@ -113,6 +113,7 @@ symbol HandleUserSpecs(string key, map event) {
 	        SwapItems( idx, idx - 1);
 		SwapUIItems( idx, idx - 1 );
 		UI::ChangeWidget(`id("table_user_spec"), `CurrentItem, idx-1);
+		Sudo::SetModified();
 	    }
 	} else if ( ret == "down"){
 	    integer idx = (integer) UI::QueryWidget(`id("table_user_spec"), `CurrentItem);
@@ -120,6 +121,7 @@ symbol HandleUserSpecs(string key, map event) {
 	        SwapItems( idx, idx + 1 );
 		SwapUIItems( idx, idx + 1 );
 		UI::ChangeWidget(`id("table_user_spec"), `CurrentItem, idx+1);
+		Sudo::SetModified();
 	    }
 	}
 }
