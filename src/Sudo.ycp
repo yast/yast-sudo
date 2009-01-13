@@ -35,6 +35,7 @@
 module "Sudo";
 textdomain "sudo";
 
+import "Confirm";
 import "Message";
 import "Progress";
 import "Report";
@@ -159,15 +160,13 @@ boolean ReadSudoSettings2() {
 
 
 global boolean ReadLocalUsers() {
-	boolean current_progress = Progress::set(false);
-	boolean gui = Users::GetGUI ();
 	Users::SetGUI (false);
-	Users::Read ();
+	Users::Read();
 
 	list <string> users = (list<string>) merge (
-        UsersCache::GetUsernames("local"),
-        UsersCache::GetUsernames("system")
-    );
+            UsersCache::GetUsernames("local"),
+            UsersCache::GetUsernames("system")
+        );
 
 	list <string> available_groups = [];
 	map<string,map<string,integer> > all_groupnames = UsersCache::GetAllGroupnames ();
@@ -183,7 +182,6 @@ global boolean ReadLocalUsers() {
 
 	all_users = (list <string>) merge(users,available_groups);
 
-	Progress::set(current_progress);
 	if(all_users == []) {
 		return false;
 	}
@@ -428,44 +426,36 @@ global boolean PollAbort() {
  */
 global boolean Read() {
 
-    /* Sudo read dialog caption */
+    if (!Confirm::MustBeRoot())
+	return false;
+
+    if(!ReadSudoSettings2()) 
+	Report::Error(Message::CannotReadCurrentSettings());
+
+    /* Error message */
+    if(!ReadLocalUsers())
+	Report::Error(_("Cannot read /etc/passwd."));
+
+    /* Sudo read dialog caption
     string caption = _("Initializing sudo Configuration");
 
     integer steps = 2;
 
     Progress::New( caption, " ", steps, [
-	    /* Progress stage 1/2 */
+	    /* Progress stage 1/2
 	    _("Read sudo settings"),
-	    /* Progress stage 2/2 */
+	    /* Progress stage 2/2
 	    _("Read local users and groups")
 	], [
-	    /* Progress step 1/2 */
+	    /* Progress step 1/2
 	    _("Reading sudo settings..."),
-	    /* Progress step 2/2 */
+	    /* Progress step 2/2
 	    _("Reading local users and groups..."),
-	    /* Progress finished */
+	    /* Progress finished
 	    Message::Finished()
 	],
 	""
-    );
-
- 	sleep(sl);
-
-    if(PollAbort()) return false;
-    Progress::NextStage();
-    /* Error message */
-    if(!ReadSudoSettings2()) Report::Error(Message::CannotReadCurrentSettings());
-    sleep(sl);
-
-    if(PollAbort()) return false;
-    Progress::NextStep();
-    /* Error message */
-    if(!ReadLocalUsers()) Report::Error(_("Cannot read /etc/passwd."));
-    sleep(sl);
-
-    if(PollAbort()) return false;
-    Progress::NextStage ();
-    sleep(sl);
+    );*/
 
     modified = false;
     return true;

@@ -213,9 +213,9 @@ list <term> UpdateCmdList (list <string> members) {
 	return items;
 
 }
-/* Read settings dialog
-     * @return `abort if aborted and `next otherwise
-     */
+/* Read settings dialog (currently unused)
+ * @return `abort if aborted and `next otherwisea
+ * 
     symbol ReadDialog() {
 	Wizard::RestoreHelp(HELPS["read"]:"");
 
@@ -225,7 +225,7 @@ list <term> UpdateCmdList (list <string> members) {
 
 	boolean ret = Sudo::Read();
 	return ret ? `next : `abort;
-    }
+    }*/
 
     /**
      * Write settings dialog

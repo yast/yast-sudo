@@ -132,7 +132,6 @@ any MainSequence() {
 			`next : "configuration",
 		],
 	 ];
-
     any ret = Sequencer::Run(aliases, sequence);
 
     return ret;
@@ -145,17 +144,12 @@ any MainSequence() {
 any SudoSequence() {
 
     map aliases = $[
-	"read"	: [ ``( ReadDialog() ), true ],
 	"main"	:   ``( MainSequence() ),
 	"write"	: [ ``( WriteDialog() ), true ]
     ];
 
     map sequence = $[
-	"ws_start" : "read",
-	"read" : $[
-	    `abort	: `abort,
-	    `next	: "main"
-	],
+	"ws_start" : "main",
 	"main" : $[
 	    `abort	: `abort,
 	    `next	: "write"
@@ -168,6 +162,8 @@ any SudoSequence() {
 
     Wizard::CreateDialog();
     Wizard::SetDesktopIcon("sudo");
+    if (!Sudo::Read())
+       return `abort;
 
     any ret = Sequencer::Run(aliases, sequence);
 
