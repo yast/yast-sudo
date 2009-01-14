@@ -36,6 +36,7 @@ module "Sudo";
 textdomain "sudo";
 
 import "Confirm";
+import "Map";
 import "Message";
 import "Progress";
 import "Report";
@@ -44,8 +45,7 @@ import "Service";
 import "SCR";
 import "String";
 import "Summary";
-import "Users";
-import "UsersCache";
+import "UsersPasswd";
 
 /**
  * Data was modified?
@@ -160,32 +160,26 @@ boolean ReadSudoSettings2() {
 
 
 global boolean ReadLocalUsers() {
-	Users::SetGUI (false);
-	Users::Read();
+
+	if (!UsersPasswd::Read( $[]))
+	    return false;
 
 	list <string> users = (list<string>) merge (
-            UsersCache::GetUsernames("local"),
-            UsersCache::GetUsernames("system")
-        );
+	      Map::Keys( UsersPasswd::GetUsers("local")),
+	      Map::Keys( UsersPasswd::GetUsers("system")) );
 
-	list <string> available_groups = [];
-	map<string,map<string,integer> > all_groupnames = UsersCache::GetAllGroupnames ();
+	list <string> available_groups = (list<string>) merge (
+	      Map::Keys( UsersPasswd::GetGroups("local")),
+	      Map::Keys( UsersPasswd::GetGroups("system")) );
 
-    foreach (string grouptype, map<string,integer> groupmap, all_groupnames, {
-     // only local sets
-		if (!contains (["local", "system"], grouptype))
-			break;
-		foreach (string group, integer val, groupmap, {
-			available_groups = add (available_groups,"%" + group);
-		});
+        available_groups = maplist (string group, available_groups, {
+	    return ("%" + group);
 	});
 
 	all_users = (list <string>) merge(users,available_groups);
+	y2milestone("Read the following users and groups: %1", all_users);
 
-	if(all_users == []) {
-		return false;
-	}
-	else return true;
+	return true;
 }
 
 global boolean WriteSudoSettings2()
@@ -434,7 +428,7 @@ global boolean Read() {
 
     /* Error message */
     if(!ReadLocalUsers())
-	Report::Error(_("Cannot read /etc/passwd."));
+	Report::Error(_("An error occurred while reading users and groups."));
 
     /* Sudo read dialog caption
     string caption = _("Initializing sudo Configuration");
