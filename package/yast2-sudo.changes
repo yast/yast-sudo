@@ -5,6 +5,7 @@ Wed Jan 14 16:35:37 CET 2009 - kmachalkova@suse.cz
   (bnc#458328)
 - Removed write progress dialog (bnc#447586)
 - Speeding up gathering users/groups data
+- 2.18.0
 
 -------------------------------------------------------------------
 Tue Dec 16 17:38:59 CET 2008 - kmachalkova@suse.cz
