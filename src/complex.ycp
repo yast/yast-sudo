@@ -199,7 +199,7 @@ list <term> UpdateCmdList (list <string> members) {
 
 		if(pos != nil) {
 			cmd = substring(it,0, pos);
-			param = substring(it,pos);
+			param = substring(it,pos+1);
 		}
 		else {
 			cmd = it;
