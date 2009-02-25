@@ -83,11 +83,8 @@ string AddHostDialog(string host)  {
 	UI::OpenDialog(`opt(`decorated), `VBox(
 	`Frame(
 		_("Add New Host to the Alias"),
-		`VBox(
-			`HSpacing(40),
-			`VSpacing(0.5),
-			`TextEntry(`id("host_name"),_("Hostname or Network"), new_host),
-			`VSpacing(0.5)
+		`MarginBox(1,1,
+			`InputField(`id("host_name"),_("Hostname or Network"), new_host)
 		)
 	),
 	`HBox(
@@ -114,6 +111,37 @@ string AddHostDialog(string host)  {
 	}
 	UI::CloseDialog();
 	return (new_host) ;
+}
+
+string AddUserDialog( list <string> users )  {
+	string new_user ="";
+
+	UI::OpenDialog(`opt(`decorated), `VBox(
+	`Frame(
+		_("Add New User to the Alias"),
+		`MarginBox(1,1,
+			`ComboBox(`id("user_name"),_("Local and System Users (Groups)"), users)
+		)
+	),
+	`HBox( 
+	    `PushButton(`id(`ok), Label::OKButton()),
+	    `HSpacing(1),
+	    `PushButton(`id(`cancel), Label::CancelButton())
+        )
+	));
+
+	any ret = nil;
+	while (true) {
+        ret = UI::UserInput();
+	     if (ret == `ok) {
+		new_user = (string) UI::QueryWidget(`id("user_name"), `Value);
+		break;
+	     } else if (ret == `cancel) {
+		break;
+	     }
+	}
+	UI::CloseDialog();
+	return (new_user) ;
 }
 
 boolean ValidateCommand(string cmd){

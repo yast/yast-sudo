@@ -9,22 +9,15 @@ import "Report";
 include "sudo/complex.ycp";
 include "sudo/helps.ycp";
 
-any RedrawUserAlias(string name, list <string> members, list <string> users) {
+void RedrawUserAlias( list <string> members ) {
 	list <term> items = [];
-
-	if (name != "") {
-		UI::ChangeWidget(`id("user_alias_name"), `Value, name);
-	}
 
 	foreach(string it, members, {
 		items = add(items, `item(`id(it),it));
 	});
+
 	UI::ChangeWidget(`id("user_alias_members"),`Items, items);
 	UI::ChangeWidget(`id("remove_member"), `Enabled, (items != []));
-
-	UI::ReplaceWidget(`id("all_users_replace"),
-		`ComboBox(`id("all_users"),_("Local and System Users"), sort(string s, string t, users, ``( s < t))));
-
 }
 
 any AddEditUserAliasDialog (string what) {
@@ -47,35 +40,25 @@ any AddEditUserAliasDialog (string what) {
 		name = (string) it["name"]:"";
 		caption = _("Existing User Alias");
 	}
+	users = (list <string>) sort( string s1, string s2, users, ``( s1 < s2 ) );
 
 	term contents = `VBox (
-		`TextEntry(`id("user_alias_name"),_("Alias Name (in CAPITALS)")),
+		`Left( `InputField(`id("user_alias_name"),_("Alias Name (in CAPITALS)"))),
 		`VSpacing(1),
-		`HBox(
-			`VBox(
-				`opt(`hstretch),
-				`Left(`ReplacePoint(`id("all_users_replace"),
-					`ComboBox(`id("all_users"),_("Local and System Users"), [])
-				)),
-				`Table(`id("user_alias_members"), `opt(`hstretch,`vstretch), `header(_("Alias Members")),[])
-			),
-			`HSquash(
-				`VBox (
-					`VSpacing(1.1),
-                        `PushButton ( `id ( "add_member" ), `opt ( `hstretch, `key_F3 ), " " + Label::AddButton() + " "),
-                        `PushButton ( `id ( "remove_member" ), `opt ( `hstretch, `key_F5 ), " " + Label::DeleteButton() + " "),
-                        `Empty(`opt(`vstretch))
-                    )
-               )
-
-		)
+		`Table(`id("user_alias_members"), `opt(`hstretch,`vstretch), `header(_("Alias Members")),[]),
+		`HBox (
+                    `PushButton ( `id ( "add_member" ), `opt ( `key_F3 ), " " + Label::AddButton() + " "),
+                    `PushButton ( `id ( "remove_member" ), `opt ( `key_F5 ), " " + Label::DeleteButton() + " "),
+		    `HStretch()
+                )
 	);
 
 	Wizard::SetContentsButtons(caption, contents,HELPS["user_alias"]:"",Label::CancelButton(), Label::OKButton());
 	Wizard::HideAbortButton();
 	UI::ChangeWidget (`id("user_alias_name"), `ValidChars, "_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+	UI::ChangeWidget(`id("user_alias_name"), `Value, name);
 
-	RedrawUserAlias(name, alias_members,users);
+	RedrawUserAlias( alias_members );
 
 	any ret = nil;
 	while(true) {
@@ -112,23 +95,24 @@ any AddEditUserAliasDialog (string what) {
 	        break;
 		/* add users*/
 	     }else if(ret == "add_member"){
-			string new_member = (string) UI::QueryWidget(`id("all_users"),`Value);
+	        string new_member = AddUserDialog( users );
 
-			alias_members = add(alias_members, new_member);
-			users = filter(string s, users, ``(s != new_member));
-			RedrawUserAlias("",alias_members, users);
+		if (new_member != "")
+		{
+		    alias_members = add(alias_members, new_member);
+		    users = filter(string s, users, ``(s != new_member));
+		}
+		RedrawUserAlias( alias_members );
 		/* delete users */
-		}else if (ret == "remove_member"){
+	    }else if (ret == "remove_member"){
 			string current_item = (string) UI::QueryWidget(`id("user_alias_members"), `CurrentItem);
 			alias_members = filter(string s, alias_members, ``(s != current_item));
 			users = add(users, current_item);
-			UI::ReplaceWidget(`id("all_users_replace"),
-				`ComboBox(`id("all_users"),_("Local and System Users"),users));
-			RedrawUserAlias("",alias_members, users);
+			RedrawUserAlias(alias_members);
 	    /* unknown */
 	    } else {
 	        y2error("unexpected retcode: %1", ret);
-	        continue;
+	         continue;
 	    }
 	}
 
