@@ -43,7 +43,7 @@ any AddEditHostAliasDialog (string what) {
 	}
 
 	term contents = `VBox (
-		`TextEntry(`id("host_alias_name"),_("Alias Name (in CAPITALS)")),
+		`Left( `InputField(`id("host_alias_name"),_("Alias Name (in CAPITALS)"))),
 		`Left(`Label(_("Hostnames or Networks in the Alias"))),
 		`Table(`id("host_alias_members"),`header(_("Host Names/Networks")),[]),
 		`Left(`HBox(
