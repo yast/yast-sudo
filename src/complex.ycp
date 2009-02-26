@@ -152,7 +152,7 @@ boolean ValidateCommand(string cmd){
 }
 
 string AddCommandDialog(string c, string p) {
-	string new_command = c + p;
+	string new_command = "";
 
         list <string> items = Sudo::GetAliasNames("command");
 

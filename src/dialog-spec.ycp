@@ -11,12 +11,10 @@ include "sudo/helps.ycp";
 include "sudo/complex.ycp";
 
 void RedrawCmndTable (list <string> commands) {
-		if (commands != []) {
-			list <term> items = UpdateCmdList(commands);
+    list <term> items = UpdateCmdList(commands);
 
-			UI::ChangeWidget(`id("commands"),`Items, items);
-			EnableDisableButtons("command_edit", "command_remove", items);
-		}
+    UI::ChangeWidget(`id("commands"),`Items, items);
+    EnableDisableButtons("command_edit", "command_remove", items);
 }
 
 
@@ -128,6 +126,7 @@ any AddEditUserSpecDialog(string what) {
 			string new_command = AddCommandDialog("","");
 
 			if(new_command != "" && !contains(commands, new_command)) {
+				y2milestone("%1", new_command);
 				commands = add(commands, new_command);
 				RedrawCmndTable(commands);
 			}
@@ -137,8 +136,11 @@ any AddEditUserSpecDialog(string what) {
 			term it = (term) UI::QueryWidget(`id("commands"), `Item(current_item));
 
 			string new_command = AddCommandDialog(it[1]:"", it[2]:"");
-			commands[current_item] = new_command; 
-			RedrawCmndTable(commands);
+			if( new_command !="")
+			{
+			    commands[current_item] = new_command; 
+			    RedrawCmndTable(commands);
+			}
 
 		/* remove command */
 		} else if (ret == "command_remove") {
