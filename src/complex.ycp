@@ -87,10 +87,9 @@ string AddHostDialog(string host)  {
 			`InputField(`id("host_name"),_("Hostname or Network"), new_host)
 		)
 	),
-	`HBox(
-	    `PushButton(`id(`ok), Label::OKButton()),
-	    `HSpacing(1),
-	    `PushButton(`id(`cancel), Label::CancelButton())
+	`ButtonBox(
+	    `PushButton(`id(`ok), `opt(`default, `okButton), Label::OKButton()),
+	    `PushButton(`id(`cancel), `opt(`cancelButton), Label::CancelButton())
       )
 	));
 
@@ -123,10 +122,9 @@ string AddUserDialog( list <string> users )  {
 			`ComboBox(`id("user_name"),_("Local and System Users (Groups)"), users)
 		)
 	),
-	`HBox( 
-	    `PushButton(`id(`ok), Label::OKButton()),
-	    `HSpacing(1),
-	    `PushButton(`id(`cancel), Label::CancelButton())
+	`ButtonBox(
+	    `PushButton(`id(`ok), `opt(`default, `okButton), Label::OKButton()),
+	    `PushButton(`id(`cancel), `opt(`cancelButton), Label::CancelButton())
         )
 	));
 
@@ -179,10 +177,9 @@ string AddCommandDialog(string c, string p) {
 			)
 		),
 		`VSpacing(0.5),
-                `HBox(
-			`PushButton(`id(`ok), Label::OKButton()),
-	                `HSpacing(1),
-			`PushButton(`id(`cancel), Label::CancelButton())
+                `ButtonBox(
+			`PushButton(`id(`ok), `opt(`default, `okButton), Label::OKButton()),
+			`PushButton(`id(`cancel), `opt(`cancelButton), Label::CancelButton())
                 )
         ));
 
