@@ -101,8 +101,8 @@ any AddEditUserAliasDialog (string what) {
 		{
 		    alias_members = add(alias_members, new_member);
 		    users = filter(string s, users, ``(s != new_member));
+		    RedrawUserAlias( alias_members );
 		}
-		RedrawUserAlias( alias_members );
 		/* delete users */
 	    }else if (ret == "remove_member"){
 			string current_item = (string) UI::QueryWidget(`id("user_alias_members"), `CurrentItem);
