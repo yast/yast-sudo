@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Fri Feb 27 15:03:57 CET 2009 - kmachalkova@suse.cz
+
+- Do not add extra space to command parameters (bnc#473683)
+- Move user selection into pop-up dialog in user/run-as alias config
+  (bnc#421053)
+- Some compatibility fixes (ButtonBoxes, InputFields usage)
+- 2.18.1
+
+-------------------------------------------------------------------
 Wed Jan 14 16:35:37 CET 2009 - kmachalkova@suse.cz
 
 - Show "Really abort?" message only if there is something to save
