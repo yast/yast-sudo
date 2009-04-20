@@ -72,7 +72,7 @@ any AddEditCmndAliasDialog (string what) {
 		    continue;
 		}
 		if (name != new_alias) {
-		    if (Sudo::SearchAlias2( name, Sudo::GetCmndAliases2()) ) {
+		    if (Sudo::SearchAlias2( new_alias, Sudo::GetCmndAliases2()) ) {
 			Popup::Error(sformat(_("Alias with name %1 already exists"),new_alias));
 			UI::SetFocus(`id("cmnd_alias_name"));
 			continue;
