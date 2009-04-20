@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Apr 20 11:32:27 CEST 2009 - kmachalkova@suse.cz
+
+- Fixed renaming of command aliases (bnc#494384) 
+- 2.18.2
+
+-------------------------------------------------------------------
 Fri Feb 27 15:03:57 CET 2009 - kmachalkova@suse.cz
 
 - Do not add extra space to command parameters (bnc#473683)
