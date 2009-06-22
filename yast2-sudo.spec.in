@@ -1,6 +1,7 @@
 @HEADER-COMMENT@
 
 @HEADER@
+License: GPL v2 or later
 Requires:	yast2 yast2-users
 #ycp::PathComponents
 Conflicts: yast2-core < 2.13.29
