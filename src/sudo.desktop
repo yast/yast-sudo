@@ -17,9 +17,8 @@ X-SuSE-YaST-SortKey=
 X-SuSE-YaST-AutoInstResource=sudo
 
 Icon=yast-sudo
-Exec=/sbin/yast2 sudo 
+Exec=xdg-su -c "/sbin/yast2 sudo"
 
 Name=Sudo
 GenericName=Configure sudo
-X-KDE-SubstituteUID=true
 StartupNotify=true
