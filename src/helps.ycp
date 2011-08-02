@@ -118,7 +118,7 @@ An additional dialog informs whether it is safe to do so.
 	") +
 	/* Single User Specification help 3/4*/
 	_("<p><b>No Password</b> is an optional tag. Normally, users have to authenticate
-	themselves (i.e. supply their own passwod, not root's one) before running particular 
+	themselves (i.e. supply their own password, not root's one) before running particular 
 	command. Set No Password tag to 'Yes' if you want to
 	disable this authentication
 	</p>
@@ -274,7 +274,7 @@ An additional dialog informs whether it is safe to do so.
 	/*Single Command Alias Help 2/4*/
 	_("<p>Enter unique name into <b>Alias Name</b> text entry. To add a new command to the alias,
 	click on <b>Add</b> button.A pop-up window will appear, where you can enter command name
-	(or select one from file browser by clicking on <b>Browse</b> button. Additionaly, you can
+	(or select one from file browser by clicking on <b>Browse</b> button. Additionally, you can
 	specify command parameters in <b>Parameters</b> text entry
 	") +
 	/*Single Command Alias Help 3/4*/
