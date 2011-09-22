@@ -161,7 +161,7 @@ any SudoSequence() {
     ];
 
     Wizard::CreateDialog();
-    Wizard::SetDesktopIcon("sudo");
+    Wizard::SetDesktopTitleAndIcon("sudo");
     if (!Sudo::Read())
        return `abort;
 
