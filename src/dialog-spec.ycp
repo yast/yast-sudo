@@ -94,12 +94,12 @@ any AddEditUserSpecDialog(string what) {
 			    spec["tag"] = "";
 
 			if (spec["user"]:"" == "") {
-				Popup::Error(_("User name must not be empty."));
+				Popup::Error(_("Username must not be empty."));
 				UI::SetFocus(`id("user_name"));
 				continue;
 			}
 			if (spec["host"]:"" == "") {
-				Popup::Error(_("Host name must not be empty."));
+				Popup::Error(_("Hostname must not be empty."));
 				UI::SetFocus(`id("host_name"));
 				continue;
 			}
@@ -108,7 +108,7 @@ any AddEditUserSpecDialog(string what) {
 				continue;
 			}
 			if (spec["commands"]:[] == [] ) {
-				Popup::Error(_("Command list must have at least one entry"));
+				Popup::Error(_("Command list must have at least one entry."));
 				UI::SetFocus(`id("commands"));
 				continue;
 			}

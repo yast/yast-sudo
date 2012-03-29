@@ -171,8 +171,8 @@ symbol HandleHostAliases(string key, map event) {
 		boolean confirm_delete = true;
 
 		if(Sudo::SearchRules("host",name)) {
-			if (!Popup::ContinueCancel (sformat(_("Host alias %1 is being used in one of sudo rules.
-Deleting it may result in an inconsistent sudo configuration file. Really delete it ?
+			if (!Popup::ContinueCancel (sformat(_("Host alias %1 is being used in one of the sudo rules.
+Deleting it may result in an inconsistent sudo configuration file. Really delete it?
 "), name)))
 				confirm_delete = false;
 		}
@@ -214,8 +214,8 @@ symbol HandleUserAliases(string key, map event) {
 		boolean confirm_delete = true;
 
 		if(Sudo::SearchRules("user",name)) {
-			if ( !Popup::ContinueCancel (sformat(_("User alias %1 is being used in one of sudo rules .
-Deleting it may result in an inconsistent sudo configuration file. Really delete it ?
+			if ( !Popup::ContinueCancel (sformat(_("User alias %1 is being used in one of the sudo rules.
+Deleting it may result in an inconsistent sudo configuration file. Really delete it?
 "), name))) 
 			confirm_delete = false;
 		}
@@ -256,8 +256,8 @@ symbol HandleRunAsAliases(string key, map event) {
 		boolean confirm_delete = true;
 
 		if(Sudo::SearchRules("run_as","(" + name + ")")) {
-			if (!Popup::ContinueCancel (sformat(_("RunAs alias %1 is being used in one of sudo rules.
-Deleting it may result in an inconsistent sudo configuration file. Really delete it ?
+			if (!Popup::ContinueCancel (sformat(_("RunAs alias %1 is being used in one of the sudo rules.
+Deleting it may result in an inconsistent sudo configuration file. Really delete it?
 "), name)))
 				confirm_delete = false;
 		}
@@ -299,8 +299,8 @@ symbol HandleCmndAliases(string key, map event) {
 		boolean confirm_delete = true;
 
 		if(Sudo::SearchRules("commands",name)) {
-			if (!Popup::ContinueCancel (sformat(_("Command alias %1 is being used in one of sudo rules.
-Deleting it may result in an inconsistent sudo configuration file. Really delete it ?
+			if (!Popup::ContinueCancel (sformat(_("Command alias %1 is being used in one of the sudo rules.
+Deleting it may result in an inconsistent sudo configuration file. Really delete it?
 "), name)))
 				confirm_delete = false;
 		}
