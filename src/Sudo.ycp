@@ -395,7 +395,7 @@ global void RemoveCmndAlias2( integer i) {
 global boolean Abort() {
 	if (Sudo::GetModified())
 	{
-	    return Popup::YesNo( _("All changes will be lost. Really quit sudo configuration without saving ?"));
+	    return Popup::YesNo( _("All changes will be lost. Really quit sudo configuration without saving?"));
 	}
 	else
 	    return true;

@@ -38,7 +38,7 @@ map HELPS = $[
 
     /* Read dialog help 1/2 */
     "read" : _("<p><b><big>Initializing sudo Configuration</big></b><br>
-Please wait...<br></p>
+</p>
 ") +
 
     /* Read dialog help 2/2 */
@@ -48,7 +48,7 @@ Safely abort the configuration utility by pressing <b>Abort</b> now.</p>
 
     /* Write dialog help 1/2 */
     "write" : _("<p><b><big>Saving sudo Configuration</big></b><br>
-Please wait...<br></p>
+</p>
 ") +
 
     /* Write dialog help 2/2 */
