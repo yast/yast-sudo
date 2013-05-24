@@ -101,7 +101,8 @@ sub store_file {
 	close(OUTFILE);
 
 	#try syntax checking - non-zero return value of system() means failure
-	my $status = system ("visudo", "-c", "-q", "-f", "$filename.YaST2.new"); 
+        # supress any output of visudo command, otherwise YaST thinks agent is exiting
+	my $status = system ("visudo -cqf $filename.YaST2.new >/dev/null 2>&1"); 
 	if ($status != 0){
 		return y2error("Syntax error in $filename.YaST2.new"), 0; 
 	}
