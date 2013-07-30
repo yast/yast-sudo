@@ -145,8 +145,6 @@ boolean ReadSudoSettings2() {
 			m["comment"] = line[0]:"";
 
 			rules = add(rules,m);
-			break;
-	
 			}
 		    }
 		}

@@ -14,6 +14,8 @@ BuildRequires:	perl-XML-Writer update-desktop-files yast2 yast2-devtools yast2-t
 
 BuildArchitectures:	noarch
 
+Requires:       yast2-ruby-bindings >= 1.0.0
+
 Summary:	YaST2 - sudo configuration
 
 %description
@@ -32,7 +34,7 @@ of users to run commands as root or other user.
 %defattr(-,root,root)
 %dir @yncludedir@/sudo
 @yncludedir@/sudo/*
-@clientdir@/sudo.ycp
+@clientdir@/sudo.rb
 @moduledir@/Sudo.*
 @desktopdir@/sudo.desktop
 @scrconfdir@/sudo.scr
