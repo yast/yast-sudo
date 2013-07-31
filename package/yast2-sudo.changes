@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Jul 31 08:42:46 UTC 2013 - yast-devel@opensuse.org
+
+- converted from YCP to Ruby by YCP Killer
+  (https://github.com/yast/ycp-killer)
+- version 3.0.0
+
+-------------------------------------------------------------------
 Fri May 24 15:45:28 CEST 2013 - jsuchome@suse.cz
 
 - suppress visudo output, so agent exits correctly (bnc#808292)
