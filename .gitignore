@@ -10,7 +10,7 @@ config.log
 config.status
 config.sub
 configure
-configure.in
+configure.ac
 depcomp
 install-sh
 missing
@@ -18,3 +18,5 @@ mkinstalldirs
 stamp-h
 sudo.pot
 autom4te.cache
+*.m4
+*.ami
