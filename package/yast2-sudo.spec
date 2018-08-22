@@ -25,7 +25,7 @@ Source0:        %{name}-%{version}.tar.bz2
 
 url:            http://github.com/yast/yast-sudo
 Group:          System/YaST
-License:        GPL-2.0
+License:        GPL-2.0-only
 Requires:	yast2-users
 # Wizard::SetDesktopTitleAndIcon
 Requires: yast2 >= 2.21.22
