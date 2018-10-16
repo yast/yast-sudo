@@ -69,3 +69,4 @@ rake install DESTDIR="%{buildroot}"
 %{yast_scrconfdir}/sudo.scr
 %{yast_agentdir}/ag_etc_sudoers
 %doc %{yast_docdir}
+%license COPYING
