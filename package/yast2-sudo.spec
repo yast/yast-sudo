@@ -17,7 +17,7 @@
 
 
 Name:           yast2-sudo
-Version:        4.0.0
+Version:        4.0.1
 Release:        0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
@@ -68,5 +68,6 @@ rake install DESTDIR="%{buildroot}"
 %{yast_desktopdir}/sudo.desktop
 %{yast_scrconfdir}/sudo.scr
 %{yast_agentdir}/ag_etc_sudoers
+%{_datadir}/icons/*
 %doc %{yast_docdir}
 %license COPYING
