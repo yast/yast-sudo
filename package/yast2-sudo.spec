@@ -68,6 +68,6 @@ rake install DESTDIR="%{buildroot}"
 %{yast_desktopdir}/sudo.desktop
 %{yast_scrconfdir}/sudo.scr
 %{yast_agentdir}/ag_etc_sudoers
-%{_datadir}/icons/*
+%{yast_icondir}
 %doc %{yast_docdir}
 %license COPYING
