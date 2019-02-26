@@ -17,7 +17,7 @@
 
 
 Name:           yast2-sudo
-Version:        4.0.1
+Version:        4.1.0
 Release:        0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
