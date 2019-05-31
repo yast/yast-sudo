@@ -114,7 +114,7 @@ module Yast
       }
 
       Wizard.CreateDialog
-      Wizard.SetDesktopTitleAndIcon("sudo")
+      Wizard.SetDesktopTitleAndIcon("org.openSUSE.YaST.Sudo")
       return :abort if !Sudo.Read
 
       ret = Sequencer.Run(aliases, sequence)
