@@ -12,36 +12,35 @@
 # license that conforms to the Open Source Definition (Version 1.9)
 # published by the Open Source Initiative.
 
-# Please submit bugfixes or comments via http://bugs.opensuse.org/
+# Please submit bugfixes or comments via https://bugs.opensuse.org/
 #
 
 
 Name:           yast2-sudo
+Summary:        YaST2 - Sudo configuration
 Version:        4.1.0
 Release:        0
-
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-Source0:        %{name}-%{version}.tar.bz2
-
-url:            http://github.com/yast/yast-sudo
+Url:            https://github.com/yast/yast-sudo
 Group:          System/YaST
 License:        GPL-2.0-only
-Requires:	yast2-users
+
+Source0:        %{name}-%{version}.tar.bz2
+
+Requires:       yast2-users
 # Wizard::SetDesktopTitleAndIcon
-Requires: yast2 >= 2.21.22
-#ycp::PathComponents
-Conflicts: yast2-core < 2.13.29
-#Sudo icons
-Conflicts: yast2_theme < 2.13.9
-BuildRequires:	yast2 yast2-users
+Requires:       yast2 >= 2.21.22
+Requires:       yast2-ruby-bindings >= 1.0.0
+
+BuildRequires:  yast2 yast2-users
 BuildRequires:  yast2-devtools >= 3.0.6
 BuildRequires:  rubygem(yast-rake)
 
-BuildArchitectures:	noarch
+#ycp::PathComponents
+Conflicts:      yast2-core < 2.13.29
+#Sudo icons
+Conflicts:      yast2_theme < 2.13.9
 
-Requires:       yast2-ruby-bindings >= 1.0.0
-
-Summary:	YaST2 - sudo configuration
+BuildArch:      noarch
 
 %description
 The YaST2 component for sudo configuration. It configures capabilities
@@ -56,18 +55,19 @@ rake test:unit
 %build
 
 %install
-rake install DESTDIR="%{buildroot}"
-
+%yast_install
+%yast_metainfo
 
 %files
-%defattr(-,root,root)
-%dir %{yast_yncludedir}/sudo
-%{yast_yncludedir}/sudo/*
-%{yast_clientdir}/sudo.rb
-%{yast_moduledir}/Sudo.*
-%{yast_desktopdir}/sudo.desktop
-%{yast_scrconfdir}/sudo.scr
-%{yast_agentdir}/ag_etc_sudoers
+%{yast_yncludedir}
+%{yast_clientdir}
+%{yast_moduledir}
+%{yast_desktopdir}
+%{yast_metainfodir}
+%{yast_scrconfdir}
+%{yast_agentdir}
 %{yast_icondir}
 %doc %{yast_docdir}
 %license COPYING
+
+%changelog
