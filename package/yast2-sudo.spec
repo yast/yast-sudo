@@ -32,7 +32,7 @@ Requires:       yast2 >= 2.21.22
 Requires:       yast2-ruby-bindings >= 1.0.0
 
 BuildRequires:  yast2 yast2-users
-BuildRequires:  yast2-devtools >= 3.0.6
+BuildRequires:  yast2-devtools >= 4.2.2
 BuildRequires:  rubygem(yast-rake)
 
 #ycp::PathComponents
