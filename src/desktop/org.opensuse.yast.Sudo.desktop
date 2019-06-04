@@ -18,6 +18,7 @@ X-SuSE-YaST-Keywords=root,permissions,users,authentication,administrator
 Icon=yast-sudo
 Exec=xdg-su -c "/sbin/yast2 sudo"
 
-Name=Sudo
-GenericName=Configure sudo
+Name=YaST Sudo
+GenericName=Sudo
+Comment=Configure sudo
 StartupNotify=true
