@@ -35,11 +35,6 @@ BuildRequires:  yast2 yast2-users
 BuildRequires:  yast2-devtools >= 4.2.2
 BuildRequires:  rubygem(yast-rake)
 
-#ycp::PathComponents
-Conflicts:      yast2-core < 2.13.29
-#Sudo icons
-Conflicts:      yast2_theme < 2.13.9
-
 BuildArch:      noarch
 
 %description
