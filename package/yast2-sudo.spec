@@ -18,7 +18,7 @@
 
 Name:           yast2-sudo
 Summary:        YaST2 - Sudo configuration
-Version:        4.2.0
+Version:        4.2.1
 Release:        0
 Url:            https://github.com/yast/yast-sudo
 Group:          System/YaST
