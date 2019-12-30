@@ -30,23 +30,19 @@ module CFA
   # @example Loading specifications
   #   file = Sudoers.new
   #   file.load
-  #   file.current_user_specs
+  #   file.user_specs
   #
   # @example Shortcut loading specificitions
-  #   Sudoers.load.users_specs
+  #   Sudoers.read.users_specs
   #
-  # @example Writing new specifications
+  # @example Updating user specifications specifications
   #   file = Sudores.new
   #   file.load
   #   file.clean_users
-  #   file.add_user({ "user" => "yast", "host" => "ALL", "commands" => ["/sbin/yast2"] })
-  #   file.add_user({ "user" => "foo", "host" => "ALL", "commands" => ["ALL"], "tag" => "NOPASSWD" })
+  #   file.add_user("user" => "yast", "host" => "ALL", "commands" => ["/sbin/yast2"])
+  #   file.add_user("user" => "foo", "host" => "ALL", "commands" => ["ALL"], "tag" => "NOPASSWD")
   #   file.save
   class Sudoers < BaseModel
-    # @return [AgueasParser] the Augeas parser for sudoers file
-    PARSER = AugeasParser.new("sudoers.lns")
-    private_constant :PARSER
-
     # @return [String] default path to the sudoers file
     DEFAULT_PATH = "/etc/sudoers".freeze
     private_constant :DEFAULT_PATH
@@ -56,13 +52,14 @@ module CFA
     private_constant :USERS_MATCHER
 
     class << self
-      # Instantiates and loads a file
+      # Instantiates the model and loads the file content
       #
-      # This method is basically a shortcut to instantiate and load the content in just one call.
+      # Since it is basically a shortcut of Sudoers.new(...).load, every call to it will produce a
+      # new model instance. In other words, Sudoers.read !== Sudoers.read.
       #
       # @param file_handler [#read,#write] something able to read/write a string (like File)
-      # @return [Sudoers] File with the already loaded content
-      def load(file_path: DEFAULT_PATH, file_handler: Yast::TargetFile)
+      # @return [Sudoers] Model with the already loaded content
+      def read(file_path: DEFAULT_PATH, file_handler: nil)
         new(file_path: file_path, file_handler: file_handler).tap(&:load)
       end
     end
@@ -73,7 +70,7 @@ module CFA
     #
     # @see CFA::BaseModel#initialize
     def initialize(file_path: DEFAULT_PATH, file_handler: nil)
-      super(PARSER, file_path, file_handler: file_handler)
+      super(AugeasParser.new("sudoers.lns"), file_path, file_handler: file_handler)
     end
 
     # Read and prepare the data
@@ -130,30 +127,41 @@ module CFA
     #
     # See the sudoers manpage for more details.
     #
+    # TODO: should we use an specialized class to build the user specs and improve how the
+    # validations and actions are performed?
+    #
     # @param user_spec [Hash] a user specification
     # @option user_spec [String] "user" who can run the command
     # @option user_spec [String] "host" where the user can run the command
-    # @option user_spec [Array<String>] "commands" commands that the user can run
+    # @option user_spec [String, Array<String>] "commands" commands that the user can run
     # @option user_spec [String] "run_as" as whom the commands will be run
     # @option user_spec [String] "tag" the tag associated to the command (e.g. NOPASSWD)
+    #
+    # @raise [ArgumentError] when "user", "host", or "commands" are not given or are empty.
     def add_user(user_spec)
+      commands = Array(user_spec["commands"]).reject { |c| c.to_s.strip.empty? }
+
+      raise ArgumentError.new("user must be given") if user_spec["user"].to_s.strip.empty?
+      raise ArgumentError.new("host must be given") if user_spec["host"].to_s.strip.empty?
+      raise ArgumentError.new("at least one command must be specified") if commands.size.zero?
+
       user = AugeasTree.new
       host_group = AugeasTree.new
 
       host_group.add("host", user_spec["host"])
 
-      commands = user_spec["commands"].reduce([]) do |commands, command|
+      augeas_commands = commands.reduce([]) do |augeas_commands, command|
         augeas_command = AugeasTree.new
         host_group.add("command[]", AugeasTreeValue.new(augeas_command, command))
-        commands << augeas_command
+        augeas_commands << augeas_command
       end
 
       # For the time being, "runas_user" and "tag" options are added only to the first command,
       # which means that they apply to all commands.
       run_as = user_spec["run_as"].to_s.strip
       tag = user_spec["tag"].to_s.strip
-      commands[0].add("runas_user", run_as) unless run_as.empty?
-      commands[0].add("tag", tag) unless tag.empty?
+      augeas_commands[0].add("runas_user", run_as) unless run_as.empty?
+      augeas_commands[0].add("tag", tag) unless tag.empty?
 
       user.add("user", user_spec["user"])
       user.add("host_group", host_group)
@@ -166,6 +174,9 @@ module CFA
     attr_accessor :start_placer
 
     # Return the current users collection
+    #
+    # @important DO NOT modify the returned structure since it is an AugeasTree internal structure
+    # that can change.
     #
     # @return [Array<Hash>]
     def current_users
@@ -226,6 +237,8 @@ module CFA
       if first_user
         matcher = Matcher.new(key: first_user[:key], value_matcher: first_user[:value])
 
+        # This will work even after call #clean_users because the matcher searches over
+        # AugeasTree#all_data, which includes also the entries marked to be removed.
         AfterPlacer.new(matcher)
       else
         matcher = Matcher.new(key: "#includedir", value_matcher: /sudoers\.d/)

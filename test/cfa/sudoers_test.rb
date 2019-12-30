@@ -46,13 +46,21 @@ describe CFA::Sudoers do
     }
   end
 
-  describe ".load" do
-    it "loads the file content" do
-      expect(described_class).to receive(:new)
+  describe ".read" do
+    before do
+      allow(described_class).to receive(:new)
         .with(hash_including(file_path: file_path))
         .and_call_original
+    end
 
-      file = described_class.load(file_path: file_path)
+    it "reads the file content" do
+      file = described_class.read(file_path: file_path)
+
+      expect(file.users_specs).to include(hash_including("user" => "root"))
+    end
+
+    it "marks the file as loaded" do
+      file = described_class.read(file_path: file_path)
 
       expect(file.loaded?).to eq(true)
     end
@@ -60,7 +68,96 @@ describe CFA::Sudoers do
 
   describe "#load" do
     it "loads the file content" do
+      expect { sudoers.load }
+        .to change { sudoers.users_specs }
+        .from([])
+        .to(array_including(hash_including("user" => "root")))
+    end
+
+    it "marks the file as loaded" do
       expect { sudoers.load }.to change { sudoers.loaded? }.from(false).to(true)
+    end
+  end
+
+  describe "#add_user" do
+    let(:user_spec) do
+      {
+        "user" => user,
+        "host" => host,
+        "commands" => commands,
+        "run_as" => run_as,
+        "tag" => tag
+      }
+    end
+
+    let(:user) { "ytm" }
+    let(:host) { "ALL" }
+    let(:commands) { ["/usr/sbin/yast2"] }
+    let(:run_as) { nil }
+    let(:tag) { nil }
+
+    context "if user is not given" do
+      let(:user) { nil }
+
+      it "raises an ArgumentError exception" do
+        expect { sudoers.add_user(user_spec) }.to raise_error(ArgumentError, /user/)
+      end
+    end
+
+    context "when an empty user is given" do
+      let(:user) { "   " }
+
+      it "raises an ArgumentError exception" do
+        expect { sudoers.add_user(user_spec) }.to raise_error(ArgumentError, /user/)
+      end
+    end
+
+    context "when host is not given" do
+      let(:host) { nil }
+
+      it "raises an ArgumentError exception" do
+        expect { sudoers.add_user(user_spec) }.to raise_error(ArgumentError, /host/)
+      end
+    end
+
+    context "when an empty host is given" do
+      let(:host) { "  " }
+
+      it "raises an ArgumentError exception" do
+        expect { sudoers.add_user(user_spec) }.to raise_error(ArgumentError, /host/)
+      end
+    end
+
+    context "when commands are not given" do
+      let(:commands) { nil }
+
+      it "raises an ArgumentError exception" do
+        expect { sudoers.add_user(user_spec) }.to raise_error(ArgumentError, /command/)
+      end
+    end
+
+    context "when given commands are only an empty string" do
+      let(:commands) { "  " }
+
+      it "raises an ArgumentError exception" do
+        expect { sudoers.add_user(user_spec) }.to raise_error(ArgumentError, /command/)
+      end
+    end
+
+    context "when given commands are an empty array" do
+      let(:commands) { [] }
+
+      it "raises an ArgumentError exception" do
+        expect { sudoers.add_user(user_spec) }.to raise_error(ArgumentError, /command/)
+      end
+    end
+
+    context "when given commands are empty or nil" do
+      let(:commands) { [nil, "   ", ""] }
+
+      it "raises an ArgumentError exception" do
+        expect { sudoers.add_user(user_spec) }.to raise_error(ArgumentError, /command/)
+      end
     end
   end
 
@@ -70,7 +167,6 @@ describe CFA::Sudoers do
     context "when the loaded file already contains user spec" do
       it "returns a collection holding all user specs" do
         expect(sudoers.users_specs).to eq([
-          { "user" => "ALL", "host" => "ALL", "run_as" => "ALL", "commands" => ["ALL"], },
           { "user" => "root", "host" => "ALL", "run_as" => "ALL", "commands" => ["ALL"], }
         ])
       end
@@ -83,7 +179,7 @@ describe CFA::Sudoers do
         expect(sudoers.users_specs).to eq([])
       end
 
-      context "but a new user specs were added" do
+      context "but when a new user specs were added" do
         before do
           sudoers.add_user(yast_user_spec)
           sudoers.add_user(cli_user_spec)
@@ -127,7 +223,7 @@ describe CFA::Sudoers do
     context "when the file does not contain user specifications" do
       let(:example_file) { File.join(DATA_PATH, "sudoers_no_specs_example") }
 
-      context "nor does it include the #includedir sudoers.d directive" do
+      context "neither include the #includedir sudoers.d directive" do
         let(:example_file) { File.join(DATA_PATH, "sudoers_old_example") }
 
         it "writes new specifications at the end of file" do
@@ -139,7 +235,7 @@ describe CFA::Sudoers do
         end
       end
 
-      context "but does include the #includedir sudoers.d directive" do
+      context "but includes the #includedir sudoers.d directive" do
         it "writes new specifications before it" do
           sudoers.add_user(yast_user_spec)
           sudoers.add_user(cli_user_spec)
@@ -165,7 +261,7 @@ describe CFA::Sudoers do
 
       context "but they are cleaned before start adding new ones" do
         it "writes new specs starting in the previous ones position" do
-          previous_first_position = File.read(file_path) =~ /.*^ALL.*ALL.*=\(ALL\)/
+          previous_first_position = File.read(file_path) =~ /.*^root.*ALL.*=\(ALL\)/
 
           sudoers.clean_users
           sudoers.add_user(yast_user_spec)
