@@ -37,16 +37,16 @@ sub parse_file {
         return 0;
     }
 
-    my $comment = "";
-    my $line    = "";
+    my $line             = "";
+    my $previous_content = "";
 
     while (<INFILE>) {
         chomp;
         $line .= $_;
 
-        # The line is a comment
+        # The line is empty, a comment, or a directive
         if ( $line =~ m/^\s*$/ || $line =~ m/^#/ ) {
-            $comment .= "$_\n";
+            $previous_content .= "$_\n";
             $line = "";
             next;
         }
@@ -63,20 +63,20 @@ sub parse_file {
 
         if ( $line =~ m/^(\S+)\s+(\S+)\s*=\s*([^#]*)/ ) {
             $alias = $1;
-            push( @entry2, $comment, $alias, $2, $3 );
+            push( @entry2, $previous_content, $alias, $2, $3 );
         } elsif ( $line =~ m/^(\S+)\s+(\S+)/ ) {
             $alias = $1;
-            push( @entry2, $comment, $alias, $2 );
+            push( @entry2, $previous_content, $alias, $2 );
         }
 
         push( @data2, \@entry2 );
 
-        $comment = "";
-        $line    = "";
+        $line             = "";
+        $previous_content = "";
     }
 
-    # Keep the comments and directives found after last rule
-    $rest_of_file = $comment;
+    # Keep the content after last rule found
+    $rest_of_file = $previous_content;
 
     close(INFILE);
     return 1;
@@ -84,10 +84,10 @@ sub parse_file {
 
 sub store_line {
     my $line = $_[0];
-    my ( $comment, $type, $name, $members ) = @{$line};
+    my ( $previous_content, $type, $name, $members ) = @{$line};
 
-    if ($comment) {
-        print OUTFILE $comment;
+    if ($previous_content) {
+        print OUTFILE $previous_content;
     }
 
     if ($members) {
