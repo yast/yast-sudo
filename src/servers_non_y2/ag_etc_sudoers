@@ -22,6 +22,13 @@ my $filename = "/etc/sudoers";
 #	);
 my @data2 = ();
 
+# bsc#1156929: by original design, the loop parsing the file is discarding all lines after the last
+# sudo rule found, which is no longer acceptable since there could be relevant content as directives
+# (with looks like a comment).
+#
+# So, lets keep the "rest of the file" to dump it at the end when re-writting the file.
+my $rest_of_file = "";
+
 sub parse_file {
 
     if ( !open( INFILE, $filename ) ) {
@@ -68,6 +75,9 @@ sub parse_file {
         $line    = "";
     }
 
+    # Keep the comments and directives found after last rule
+    $rest_of_file = $comment;
+
     close(INFILE);
     return 1;
 }
@@ -97,6 +107,9 @@ sub store_file {
 
         #delete($data{$key});
     }
+
+    # Dump comments and directives previously found after last rule
+    print OUTFILE $rest_of_file;
 
     close(OUTFILE);
 
