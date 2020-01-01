@@ -3,6 +3,15 @@
 # Author: Bubli <kmachalkova@suse.cz>
 #
 # An agent for parsing /etc/sudoers file
+#
+# TODO: add support to understand and manage #include and #includedir directives. As they start with
+# the pound sign ('#'), they look like a comment and are being processed as, which means
+#
+#   * the agent doesn't know/is ignoring the configuration defined by the files supposed to be
+#     included
+#   * those directives are being included as part of the "$previous_content", formerly "$comment",
+#     associated with the next rule or alias found while processing the file. This is wrong since
+#     they must not be moved or deleted along with the rule as if they were comments.
 
 use ycp;
 use strict;
@@ -24,7 +33,11 @@ my @data2 = ();
 
 # bsc#1156929: by original design, the loop parsing the file is discarding all lines after the last
 # sudo rule found, which is no longer acceptable since there could be relevant content as directives
-# (with looks like a comment).
+# like:
+#
+# #includedir /etc/sudoers.d
+#
+# which looks like a comment.
 #
 # So, lets keep the "rest of the file" to dump it at the end when re-writting the file.
 my $rest_of_file = "";
@@ -44,7 +57,7 @@ sub parse_file {
         chomp;
         $line .= $_;
 
-        # The line is empty, a comment, or a directive
+        # The line is empty, a comment, or a directive like "#includedir /etc/sudoers.d"
         if ( $line =~ m/^\s*$/ || $line =~ m/^#/ ) {
             $previous_content .= "$_\n";
             $line = "";
