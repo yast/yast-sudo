@@ -3,6 +3,15 @@
 # Author: Bubli <kmachalkova@suse.cz>
 #
 # An agent for parsing /etc/sudoers file
+#
+# TODO: add support to understand and manage #include and #includedir directives. As they start with
+# the pound sign ('#'), they look like a comment and are being processed as, which means
+#
+#   * the agent doesn't know/is ignoring the configuration defined by the files supposed to be
+#     included
+#   * those directives are being included as part of the "$previous_content", formerly "$comment",
+#     associated with the next rule or alias found while processing the file. This is wrong since
+#     they must not be moved or deleted along with the rule as if they were comments.
 
 use ycp;
 use strict;
@@ -11,148 +20,164 @@ use Data::Dumper;
 
 my $filename = "/etc/sudoers";
 
-my @data2 = ();  #= (
+# (
 #		"Host_Alias" => [ ["# Host Alias Specification","SERVERS", "ns, www, mail"],["","FOO", "www.foo.org"] ],
 #		"User_Alias" => [ ["# User Alias Specification", "BAT","foobar"], ["","WWW", "wwwrun"] ],
 #		"Cmnd_Alias" => [ ["# Command Alias Specification", "HALT", "/usr/sbin/halt, /usr/sbin/shutdown -h now,"], ["","REBOOT", "/sbin/reboot"] ],
 #		"Runas_Alias" => [ ],
-#		"Defaults" => [["#Defaults specification","env_reset",""],["","always_set_home",""] ],	
-#		'root' => [ ["# User privilege specification", "ALL", "(ALL) ALL"] ],	
-#		'%wheel' => [ ["# Same thing without password", "ALL",  "(ALL) NOPASSWD: HALT,REBOOT"] ],	
+#		"Defaults" => [["#Defaults specification","env_reset",""],["","always_set_home",""] ],
+#		'root' => [ ["# User privilege specification", "ALL", "(ALL) ALL"] ],
+#		'%wheel' => [ ["# Same thing without password", "ALL",  "(ALL) NOPASSWD: HALT,REBOOT"] ],
 #	);
+my @data2 = ();
 
-
+# bsc#1156929: by original design, the loop parsing the file is discarding all lines after the last
+# sudo rule found, which is no longer acceptable since there could be relevant content as directives
+# like:
+#
+# #includedir /etc/sudoers.d
+#
+# which looks like a comment.
+#
+# So, lets keep the "rest of the file" to dump it at the end when re-writting the file.
+my $rest_of_file = "";
 
 sub parse_file {
 
-	if (!open(INFILE, $filename)) {
-		return 1 if ($! == ENOENT); #File doesn't exist (yet)
-		y2error("Could not open file $filename for reading: %1", $!);
-		return 0;
-	}
+    if ( !open( INFILE, $filename ) ) {
+        return 1 if ( $! == ENOENT );    #File doesn't exist (yet)
+        y2error( "Could not open file $filename for reading: %1", $! );
+        return 0;
+    }
 
-	my $comment = "";
-        my $line = "";
-	while (<INFILE>) {
-		chomp;
-                $line .= $_;
-		#a line is a comment
-		if ($line =~ m/^\s*$/ || $line =~ m/^#/) {
-			$comment .= "$_\n";
-                        $line = "";
-			next; 
-		}
+    my $line             = "";
+    my $previous_content = "";
 
-		#a line is \-terminated multiline rule/alias
-		#save it and continue on the next line
-                if ($line =~ m/^(.*)\\$/){
-                  $line = $1;
-                  next;
-                }
+    while (<INFILE>) {
+        chomp;
+        $line .= $_;
 
-	        my $alias       = "";
+        # The line is empty, a comment, or a directive like "#includedir /etc/sudoers.d"
+        if ( $line =~ m/^\s*$/ || $line =~ m/^#/ ) {
+            $previous_content .= "$_\n";
+            $line = "";
+            next;
+        }
 
-		my @entry2 = ();
-		if ($line =~ m/^(\S+)\s+(\S+)\s*=\s*([^#]*)/) {
-			$alias =$1;
-			push(@entry2, $comment, $alias, $2, $3);
-		}	
-		elsif ($line =~ m/^(\S+)\s+(\S+)/) {
-			$alias =$1;
-			push(@entry2, $comment, $alias, $2);
-		}
-	
-		push (@data2, \@entry2);
+        # The line is \-terminated multiline rule/alias
+        # Save it and continue on the next line
+        if ( $line =~ m/^(.*)\\$/ ) {
+            $line = $1;
+            next;
+        }
 
-		$comment = "";
-                $line = "";
-	}
+        my @entry2 = ();
+        my $alias  = "";
 
-	close (INFILE);
-	return 1;
+        if ( $line =~ m/^(\S+)\s+(\S+)\s*=\s*([^#]*)/ ) {
+            $alias = $1;
+            push( @entry2, $previous_content, $alias, $2, $3 );
+        } elsif ( $line =~ m/^(\S+)\s+(\S+)/ ) {
+            $alias = $1;
+            push( @entry2, $previous_content, $alias, $2 );
+        }
+
+        push( @data2, \@entry2 );
+
+        $line             = "";
+        $previous_content = "";
+    }
+
+    # Keep the content after last rule found
+    $rest_of_file = $previous_content;
+
+    close(INFILE);
+    return 1;
 }
 
 sub store_line {
-	my $line = $_[0];
-	my ($comment, $type, $name, $members) = @{$line};
+    my $line = $_[0];
+    my ( $previous_content, $type, $name, $members ) = @{$line};
 
-	if($comment){
-		print OUTFILE $comment;
-	}
-	if($members) {
-		print OUTFILE $type,"\t", $name, " = ", $members, "\n";
-	}
-	else {
-		print OUTFILE $type,"\t", $name,"\n";
-	}
+    if ($previous_content) {
+        print OUTFILE $previous_content;
+    }
+
+    if ($members) {
+        print OUTFILE $type, "\t", $name, " = ", $members, "\n";
+    } else {
+        print OUTFILE $type, "\t", $name, "\n";
+    }
 }
 
 sub store_file {
+    open( OUTFILE, ">$filename.YaST2.new" )
+      or return y2error( "Could not open file $filename.YaST2.new for writing: %1", $! ), 0;
 
-	open(OUTFILE,">$filename.YaST2.new") 
-		or return y2error("Could not open file $filename.YaST2.new for writing: %1", $!), 0;
-	
-	#Dump the rest
-	foreach my $line (@data2) {
-		store_line($line);
-		#delete($data{$key});
-	}
+    # Write the data content
+    foreach my $line (@data2) {
+        store_line($line);
 
-	close(OUTFILE);
+        #delete($data{$key});
+    }
 
-	#try syntax checking - non-zero return value of system() means failure
-        # supress any output of visudo command, otherwise YaST thinks agent is exiting
-	my $status = system ("visudo -cqf $filename.YaST2.new >/dev/null 2>&1"); 
-	if ($status != 0){
-		return y2error("Syntax error in $filename.YaST2.new"), 0; 
-	}
+    # Dump comments and directives previously found after last rule
+    print OUTFILE $rest_of_file;
 
-	if (-f $filename) {
-		rename $filename, "$filename.YaST2.save" or return y2error("Error creating backup: $!"), 0;
-	}
-	rename "$filename.YaST2.new", $filename or return y2error("Error moving temp file: $!"), 0;
-	
-	#Save /etc/sudoers with 0440 access rights - FaTE #300934
-	chmod(0440,$filename);
-	return 1;
-} 
+    close(OUTFILE);
 
-#parse whole file at once, fill in %data structure
-parse_file();
+    # Try syntax checking - non-zero return value of system() means failure
+    # supress any output of visudo command, otherwise YaST thinks agent is exiting
+    my $status = system("visudo -cqf $filename.YaST2.new >/dev/null 2>&1");
 
-#main loop
-while ( <STDIN> ) {
-	my ($command, $path, $argument) = ycp::ParseCommand ($_);
+    if ( $status != 0 ) {
+        return y2error("Syntax error in $filename.YaST2.new"), 0;
+    }
 
-	if($command eq "Read") {
-		ycp::Return(\@data2);
-	}
+    if ( -f $filename ) {
+        rename $filename, "$filename.YaST2.save"
+          or return y2error("Error creating backup: $!"), 0;
+    }
 
-	elsif($command eq "Write") {
-		my $result = "true";
-		if ($path eq "." && ref($argument) eq "ARRAY") {
-			@data2 = @{$argument};
-		}
-		elsif ($path eq "." && !defined($argument)) {
-			$result = store_file() ? "true" : "false";
-		}
-		else {
-			y2error("Invalid path $path, or argument:", ref($argument));
-			$result = "false";
-		}
+    rename "$filename.YaST2.new", $filename
+      or return y2error("Error moving temp file: $!"), 0;
 
-		ycp::Return($result);
-	}
-
-	elsif ($command eq "result") {
-		exit;
-	}
-
-	else {
-		y2error("Unknown instruction $command, or argument:", ref ($argument));
-		ycp::Return("false");
-	}
+    # Save /etc/sudoers with 0440 access rights - FaTE #300934
+    chmod( 0440, $filename );
+    return 1;
 }
 
-#Debug only !
-#print STDERR Dumper(\@data2);
+# Parse the whole file at once, fill in %data structure
+parse_file();
+
+# Main loop
+while (<STDIN>) {
+    my ( $command, $path, $argument ) = ycp::ParseCommand($_);
+
+    if ( $command eq "Read" ) {
+        ycp::Return( \@data2 );
+
+    } elsif ( $command eq "Write" ) {
+        my $result = "true";
+        if ( $path eq "." && ref($argument) eq "ARRAY" ) {
+            @data2 = @{$argument};
+        } elsif ( $path eq "." && !defined($argument) ) {
+            $result = store_file() ? "true" : "false";
+        } else {
+            y2error( "Invalid path $path, or argument:", ref($argument) );
+            $result = "false";
+        }
+
+        ycp::Return($result);
+
+    } elsif ( $command eq "result" ) {
+        exit;
+
+    } else {
+        y2error( "Unknown instruction $command, or argument:", ref($argument) );
+        ycp::Return("false");
+    }
+}
+
+# Debug only !
+# print STDERR Dumper(\@data2);
