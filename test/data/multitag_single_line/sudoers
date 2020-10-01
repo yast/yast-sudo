@@ -1,0 +1,1 @@
+myuser ALL = (root) NOPASSWD:NOEXEC: /usr/bin/vim, /sbin/halt, /sbin/reboot
