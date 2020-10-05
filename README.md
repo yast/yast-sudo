@@ -2,7 +2,7 @@
 
 Intention of this module is to provide UI for configuring sudo.
 
-### Known Issues
+### Known Limitations
 
 - Module using for parsing sudoers own handcrafted perl parser which has
   limitations especially regarding new sudo changes as opposite to e.g.
