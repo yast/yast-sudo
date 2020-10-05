@@ -18,6 +18,6 @@ Cmnd_Alias	REBOOT = /usr/sbin/reboot
 Cmnd_Alias	SHELLS = /sbin/sh, /usr/bin/sh, /usr/bin/csh, /usr/bin/ksh, \
 			 /usr/local/bin/tcsh, /usr/bin/rsh, \
 			 /usr/local/bin/zsh
-Cmn_Alias	SU = /usr/bin/su
-Cmn_Alias	VIPW = /usr/sbin/vipw, /usr/bin/passwd, /usr/bin/chsh, \
+Cmd_Alias	SU = /usr/bin/su
+Cmd_Alias	VIPW = /usr/sbin/vipw, /usr/bin/passwd, /usr/bin/chsh, \
 		       /usr/bin/chfn
