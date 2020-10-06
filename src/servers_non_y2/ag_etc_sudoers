@@ -103,7 +103,8 @@ sub store_line {
         print OUTFILE $previous_content;
     }
 
-    if ($members) {
+    # do not break include directives
+    if ($members && $type !~ /^\@include/ ) {
         print OUTFILE $type, "\t", $name, " = ", $members, "\n";
     } else {
         print OUTFILE $type, "\t", $name, "\n";
