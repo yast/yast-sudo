@@ -1,0 +1,1 @@
+myuser ALL = (root) NOPASSWD: /usr/bin/vim, PASSWD: /sbin/halt, /sbin/reboot
