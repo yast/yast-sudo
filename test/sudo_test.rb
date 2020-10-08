@@ -189,5 +189,22 @@ describe Yast::Sudo do
 
       expect(subject.GetRules).to eq expected_rules
     end
+
+    it "parses and set rules with run as specified" do
+      lines = [
+        # (root, bin : operator, system) means can run as root or bin user or as operator or system group
+        { type: "user1", name: "ALL", rest: "NOPASSWD: (root, bin : operator, system) /bin/test" },
+      ]
+      mock_sudo(lines)
+
+      expected_rules = [
+        { "user" => "user1", "host" => "ALL", "comment" => "", "run_as" => "(root, bin : operator, system)",
+          "tag" => "NOPASSWD:", "commands" => ["/bin/test"] },
+      ]
+
+      subject.ReadSudoSettings2
+
+      expect(subject.GetRules).to eq expected_rules
+    end
   end
 end
