@@ -129,7 +129,7 @@ module Yast
                 "mem"  => lst
               }
             )
-          when "Cmnd_Alias"
+          when "Cmnd_Alias", "Cmd_Alias"
             lst = Builtins.maplist(
               Builtins.splitstring(Ops.get_string(line, 3, ""), ",")
             ) do |s|

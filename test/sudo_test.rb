@@ -98,8 +98,6 @@ describe Yast::Sudo do
     end
 
     it "parses and set command aliases with Cmd_Alias alternative name" do
-      pending "Not recognized yet"
-
       lines = [
         { comment: "test\n", type: "Cmd_Alias", name: "ALIAS2", rest: "/bin/cmd1" }
       ]
