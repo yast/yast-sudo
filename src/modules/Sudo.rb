@@ -160,6 +160,11 @@ module Yast
             if Builtins.regexpmatch(type, "^Defaults.*$")
               #do nothing, keep defaults untouched
               @defaults = Builtins.add(@defaults, line)
+            elsif type =~ /^sha\d+:/
+              raise UnsupportedSudoConfig.new(
+                _("Rules with digest are not supported."),
+                "#{type} #{Ops.get_string(line, 2, "")} #{Ops.get_string(line, 3, "")}"
+              )
             else
               m = {}
               cmd = []

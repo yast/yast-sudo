@@ -162,7 +162,7 @@ describe Yast::Sudo do
       expect{subject.ReadSudoSettings2}.to raise_error(Yast::UnsupportedSudoConfig)
     end
 
-    it "parses and set rules with associated tags" do
+    it "raises UnsupportedSudoConfig for rules with associated tags" do
       lines = [
         { type: "user1", name: "ALL", rest: "NOPASSWD: /usr/bin/su operator, PASSWD: /bin/test" },
       ]
@@ -186,6 +186,16 @@ describe Yast::Sudo do
       subject.ReadSudoSettings2
 
       expect(subject.GetRules).to eq expected_rules
+    end
+
+    it "raises UnsupportedSudoConfig for rules with digest" do
+      lines = [
+        { type: "sha256:865d0fc47d0aa1fe198e2d9b0cd5b27e35838dc8f73b6629adc646d3cc2d9c94",
+          name: "user1" },
+      ]
+      mock_sudo(lines)
+
+      expect{subject.ReadSudoSettings2}.to raise_error(Yast::UnsupportedSudoConfig)
     end
   end
 end
