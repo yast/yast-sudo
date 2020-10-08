@@ -153,41 +153,22 @@ describe Yast::Sudo do
       expect(subject.GetRules).to eq expected_rules
     end
 
-    it "parses and set rules with multiple tags" do
-      pending "it use just first tag"
-
+    it "raises UnsupportedSudoConfig for rules with multiple tags" do
       lines = [
         { type: "user1", name: "ALL", rest: "NOPASSWD:NOEXEC: /usr/bin/su operator" },
       ]
       mock_sudo(lines)
 
-      expected_rules = [
-        { "user" => "user1", "host" => "ALL", "comment" => "",
-          "tag" => "NOPASSWD:NOEXEC:", "commands" => ["/usr/bin/su operator"] },
-      ]
-
-      subject.ReadSudoSettings2
-
-      expect(subject.GetRules).to eq expected_rules
+      expect{subject.ReadSudoSettings2}.to raise_error(Yast::UnsupportedSudoConfig)
     end
 
     it "parses and set rules with associated tags" do
-      pending "it removes whole first command and keep wrong tag with rest"
-
       lines = [
         { type: "user1", name: "ALL", rest: "NOPASSWD: /usr/bin/su operator, PASSWD: /bin/test" },
       ]
       mock_sudo(lines)
 
-      expected_rules = [
-        { "user" => "user1", "host" => "ALL", "comment" => "",
-          # FIXME: not sure how here should look expected result as data structure is bad
-          "tag" => "NOPASSWD:", "commands" => ["/usr/bin/su operator", "PASSWD: /bin/test"] },
-      ]
-
-      subject.ReadSudoSettings2
-
-      expect(subject.GetRules).to eq expected_rules
+      expect{subject.ReadSudoSettings2}.to raise_error(Yast::UnsupportedSudoConfig)
     end
 
     it "parses and set rules with run as specified" do

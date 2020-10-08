@@ -31,6 +31,17 @@
 require "yast"
 
 module Yast
+
+  class UnsupportedSudoConfig < RuntimeError
+    attr_reader :line
+
+    def initialize(msg, line)
+      super(msg)
+
+      @line = line
+    end
+  end
+
   class SudoClass < Module
     def main
       Yast.import "UI"
@@ -176,6 +187,14 @@ module Yast
                   Ops.get_string(line, 3, ""),
                   "NOPASSWD:|SETENV:|NOEXEC:"
                 )
+                rest = Ops.get_string(line, 3, "")
+                # remove from rest runas as it can also contain ":"
+                if rest.gsub(/\([^\)]*\)/, "").count(":") > 1
+                  raise UnsupportedSudoConfig.new(
+                    _("Multiple tags on single line are not supported."),
+                    "#{type} #{m["host"]} = #{Ops.get_string(line, 3, "")}"
+                  )
+                end
                 Ops.set(
                   m,
                   "tag",
@@ -565,7 +584,16 @@ module Yast
     def Read
       return false if !Confirm.MustBeRoot
 
-      Report.Error(Message.CannotReadCurrentSettings) if !ReadSudoSettings2()
+      begin
+        Report.Error(Message.CannotReadCurrentSettings) if !ReadSudoSettings2()
+      rescue UnsupportedSudoConfig => e
+        msg = _("Unsupported configuration found. YaST2 exits now to prevent breaking system.")
+        msg += "\n" + _("Issue: ") + e.message
+        msg += "\n" + _("Line content: ") + e.line
+        Report.Error(msg)
+
+        return false
+      end
 
       # Error message
       if !ReadLocalUsers()
