@@ -33,7 +33,8 @@ Requires:       yast2-ruby-bindings >= 1.0.0
 
 BuildRequires:  yast2 yast2-users
 BuildRequires:  yast2-devtools >= 4.2.2
-BuildRequires:  rubygem(yast-rake)
+BuildRequires:  rubygem(%rb_default_ruby_abi:rspec)
+BuildRequires:  rubygem(%rb_default_ruby_abi:yast-rake)
 BuildRequires:  update-desktop-files
 
 BuildArch:      noarch
