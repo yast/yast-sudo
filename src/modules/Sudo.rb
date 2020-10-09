@@ -592,7 +592,7 @@ module Yast
       begin
         Report.Error(Message.CannotReadCurrentSettings) if !ReadSudoSettings2()
       rescue UnsupportedSudoConfig => e
-        msg = _("Unsupported configuration found. YaST2 exits now to prevent breaking system.")
+        msg = _("Unsupported configuration found. YaST will now exit to prevent from breaking the system.")
         msg += "\n" + _("Issue: ") + e.message
         msg += "\n" + _("Line content: ") + e.line
         Report.Error(msg)
