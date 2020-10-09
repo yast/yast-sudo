@@ -31,6 +31,17 @@
 require "yast"
 
 module Yast
+
+  class UnsupportedSudoConfig < RuntimeError
+    attr_reader :line
+
+    def initialize(msg, line)
+      super(msg)
+
+      @line = line
+    end
+  end
+
   class SudoClass < Module
     def main
       Yast.import "UI"
@@ -118,7 +129,7 @@ module Yast
                 "mem"  => lst
               }
             )
-          when "Cmnd_Alias"
+          when "Cmnd_Alias", "Cmd_Alias"
             lst = Builtins.maplist(
               Builtins.splitstring(Ops.get_string(line, 3, ""), ",")
             ) do |s|
@@ -149,6 +160,11 @@ module Yast
             if Builtins.regexpmatch(type, "^Defaults.*$")
               #do nothing, keep defaults untouched
               @defaults = Builtins.add(@defaults, line)
+            elsif type =~ /^sha\d+:/
+              raise UnsupportedSudoConfig.new(
+                _("Rules with digest are not supported."),
+                "#{type} #{Ops.get_string(line, 2, "")} #{Ops.get_string(line, 3, "")}"
+              )
             else
               m = {}
               cmd = []
@@ -176,6 +192,14 @@ module Yast
                   Ops.get_string(line, 3, ""),
                   "NOPASSWD:|SETENV:|NOEXEC:"
                 )
+                rest = Ops.get_string(line, 3, "")
+                # remove from rest runas as it can also contain ":"
+                if rest.gsub(/\([^\)]*\)/, "").count(":") > 1
+                  raise UnsupportedSudoConfig.new(
+                    _("Multiple tags on single line are not supported."),
+                    "#{type} #{m["host"]} = #{Ops.get_string(line, 3, "")}"
+                  )
+                end
                 Ops.set(
                   m,
                   "tag",
@@ -334,8 +358,7 @@ module Yast
 
       Builtins.y2milestone("Sudo settings %1", set)
 
-      return SCR.Write(path(".sudo"), nil) if SCR.Write(path(".sudo"), set)
-      true
+      SCR.Write(path(".sudo"), set) && SCR.Write(path(".sudo"), nil)
     end
 
     def SetItem(i)
@@ -566,7 +589,16 @@ module Yast
     def Read
       return false if !Confirm.MustBeRoot
 
-      Report.Error(Message.CannotReadCurrentSettings) if !ReadSudoSettings2()
+      begin
+        Report.Error(Message.CannotReadCurrentSettings) if !ReadSudoSettings2()
+      rescue UnsupportedSudoConfig => e
+        msg = _("Unsupported configuration found. YaST will now exit to prevent from breaking the system.")
+        msg += "\n" + _("Issue: ") + e.message
+        msg += "\n" + _("Line content: ") + e.line
+        Report.Error(msg)
+
+        return false
+      end
 
       # Error message
       if !ReadLocalUsers()
@@ -635,7 +667,12 @@ module Yast
       Progress.NextStage
       # Error message
       if !WriteSudoSettings2()
-        Report.Error(_("Cannot write settings."))
+        msg = _("Cannot write settings.")
+        if ::File.exists?("/etc/sudoers.YaST2.new") # if file exists it is invalid syntax
+          res = SCR.Execute(path(".target.bash_output"), "/usr/sbin/visudo -cf /etc/sudoers.YaST2.new")
+          msg += _("\nSyntax error in target file. See /etc/sudoers.YaST2.new.\nDetails: ") + res["stdout"]
+        end
+        Report.Error(msg)
         ret = false
       end
       Builtins.sleep(sl)

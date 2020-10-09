@@ -1,0 +1,4 @@
+## Do not insult users when they enter an incorrect password.
+Defaults !insults
+
+@include sudoers3
