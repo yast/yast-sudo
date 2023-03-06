@@ -4,6 +4,13 @@ Fri Sep 01 19:57:03 UTC 2023 - Josef Reidinger <jreidinger@suse.com>
 - Branch package for SP6 (bsc#1208913)
 
 -------------------------------------------------------------------
+Mon Mar  6 14:43:16 UTC 2023 - Martin Vidner <mvidner@suse.com>
+
+- Stop using File.exists? which no longer works in Ruby 3.2
+  (bsc#1206419)
+- 4.6.1
+
+-------------------------------------------------------------------
 Wed Apr 06 13:24:58 UTC 2022 - Ladislav Slezák <lslezak@suse.cz>
 
 - Bump version to 4.5.0 (bsc#1198109)
