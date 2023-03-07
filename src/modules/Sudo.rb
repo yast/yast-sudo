@@ -668,7 +668,7 @@ module Yast
       # Error message
       if !WriteSudoSettings2()
         msg = _("Cannot write settings.")
-        if ::File.exists?("/etc/sudoers.YaST2.new") # if file exists it is invalid syntax
+        if ::File.exist?("/etc/sudoers.YaST2.new") # if file exists it is invalid syntax
           res = SCR.Execute(path(".target.bash_output"), "/usr/sbin/visudo -cf /etc/sudoers.YaST2.new")
           msg += _("\nSyntax error in target file. See /etc/sudoers.YaST2.new.\nDetails: ") + res["stdout"]
         end
