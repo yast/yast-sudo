@@ -1,7 +1,7 @@
 #
 # spec file for package yast2-sudo
 #
-# Copyright (c) 2013 SUSE LINUX Products GmbH, Nuernberg, Germany.
+# Copyright (c) 2023 SUSE LLC
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -20,7 +20,7 @@ Name:           yast2-sudo
 Summary:        YaST2 - Sudo configuration
 Version:        4.6.1
 Release:        0
-Url:            https://github.com/yast/yast-sudo
+URL:            https://github.com/yast/yast-sudo
 Group:          System/YaST
 License:        GPL-2.0-only
 
@@ -31,11 +31,12 @@ Requires:       yast2-users
 Requires:       yast2 >= 2.21.22
 Requires:       yast2-ruby-bindings >= 1.0.0
 
-BuildRequires:  yast2 yast2-users
+BuildRequires:  update-desktop-files
+BuildRequires:  yast2
 BuildRequires:  yast2-devtools >= 4.2.2
+BuildRequires:  yast2-users
 BuildRequires:  rubygem(%rb_default_ruby_abi:rspec)
 BuildRequires:  rubygem(%rb_default_ruby_abi:yast-rake)
-BuildRequires:  update-desktop-files
 
 BuildArch:      noarch
 
