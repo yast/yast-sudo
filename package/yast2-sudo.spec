@@ -18,7 +18,7 @@
 
 Name:           yast2-sudo
 Summary:        YaST2 - Sudo configuration
-Version:        5.0.0
+Version:        5.0.1
 Release:        0
 Url:            https://github.com/yast/yast-sudo
 Group:          System/YaST
@@ -35,7 +35,6 @@ BuildRequires:  yast2 yast2-users
 BuildRequires:  yast2-devtools >= 4.2.2
 BuildRequires:  rubygem(%rb_default_ruby_abi:rspec)
 BuildRequires:  rubygem(%rb_default_ruby_abi:yast-rake)
-BuildRequires:  update-desktop-files
 
 BuildArch:      noarch
 
